@@ -1,0 +1,404 @@
+#' Function to generate FABM code
+#'
+#' This function creates fortran90 FABM code from data.frames.
+#' @param vars data.frame containing the state variables
+#' @param pars data.frame containing the parameters
+#' @param funs data.frame containing the functions
+#' @param pros data.frame containing the processes
+#' @param stoi data.frame containing the stoichiometry
+#' @keywords FABM
+#' @export
+
+gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=TRUE){
+
+  cat("Checking model..\n")
+  ## test if the model configuration is ok (at the moment by creating a rodeo object)
+  model <- rodeo::rodeo$new(vars,pars,funs,pros,stoi)
+
+  ## test if the dependency refere to standard names as definded by FABM
+
+  if(any(!is.na(funs$dependency))){
+    if(any(!funs$dependency%in%std_names_FABM)){
+      stop(paste0("Dependency name must be one of the standard nammes defined by FABM \n",
+           "See FABM wiki: ",
+           "https://github.com/fabm-model/fabm/wiki/List-of-standard-variables"))
+    }
+  }
+  cat("Model input OK\n")
+
+  ## write switches for surface processes
+  if(any(!is.na(pros$surf))){
+    pros$surf[is.na(pros$surf)] <- FALSE
+    vars$surf <- vars$name%in%stoi$variable[stoi$process%in%pros$name[pros$surf]]
+    stoi$surf <- stoi$process%in%pros$name[pros$surf]
+  } else {
+    pros$surf <- FALSE
+    vars$surf <- FALSE
+    stoi$surf <- FALSE
+  }
+  ## write switches for surface processes
+  if(any(!is.na(pros$bot))){
+    pros$bot[is.na(pros$bot)] <- FALSE
+    vars$bot <- vars$name%in%stoi$variable[stoi$process%in%pros$name[pros$bot]]
+    stoi$bot <- stoi$process%in%pros$name[pros$bot]
+  } else {
+    pros$bot <- FALSE
+    vars$bot <- FALSE
+    stoi$bot <- FALSE
+  }
+
+  ## write switches for pelagic processes
+  vars$pela <- vars$name%in%stoi$variable[stoi$process%in%pros$name[!pros$bot&!pros$surf]]
+  stoi$pela <- stoi$process%in%pros$name[!pros$bot&!pros$surf]
+  pros$pela <- pros$name%in%stoi$process[stoi$process%in%pros$name[!pros$bot&!pros$surf]]
+
+  ##------------- start code writing -------------------------------------------------
+  code <- paste0('#include "fabm_driver.h"\n','module tuddhyb_rodeo\n',
+                 '\tuse fabm_types\n', '\timplicit none\n',  '\tprivate\n',
+                 '\ttype, extends(type_base_model), public :: type_tuddhyb_rodeo\n',
+                  collapse = "\n")
+  ## declare state variables
+  code <- code_add(code,paste0("\t\ttype (type_state_variable_id) :: id_",vars$name))
+  # declare diagnostics if wanted
+  if(diags){
+    code <- code_add(code,"\n")
+    if(any(pros$pela)){
+      code <- code_add(code,paste0("\t\ttype (type_diagnostic_variable_id) :: id_",
+                                 pros$name[pros$pela]))
+      code <- code_add(code,"\n")
+    }
+    ## if there are surface processes add diagnostics
+    if(any(pros$surf)){
+      code <- code_add(code,paste0("\t\ttype (type_horizontal_diagnostic_variable_id) :: id_",
+                                   pros$name[pros$surf]))
+      code <- code_add(code,"\n")
+    }
+    if(any(pros$bot)){
+      code <- code_add(code,paste0("\t\ttype (type_horizontal_diagnostic_variable_id) :: id_",
+                                   pros$name[pros$bot]))
+      code <- code_add(code,"\n")
+    }
+  } else {
+    code <- code_add(code,"\n")
+  }
+  ## if there are any dependencies to state variables from the physical model add them
+  if(any(!is.na(funs$dependency))){
+    code <- code_add(code,paste0("\t\ttype (type_dependency_id) :: id_",
+                                 funs$name[!is.na(funs$dependency)]))
+    code <- code_add(code,"\n")
+  }
+  ## declare parameters
+  code <- code_add(code,paste0("\t\treal(rk) :: ",pars$name))
+  code <- code_add(code,"\n")
+  ## declare model procedures
+  code <- code_add(code,c("\n\tcontains\n","\t\t! Reference model procedures here.",
+                          "\t\tprocedure :: initialize\n"))
+  ## if there are pelagic processes declare do
+  if(any(vars$pela)){
+    code <- code_add(code,"\t\tprocedure :: do\n")
+  }
+  ## if there are surface processes declare do_surface
+  if(any(pros$surf)){
+    code <- code_add(code,"\t\tprocedure :: do_surface\n")
+  }
+  ## if there are bottom processes declare do_bottom
+  if(any(pros$bot)){
+    code <- code_add(code,"\t\tprocedure :: do_bottom\n")
+  }
+  code <- code_add(code,"\n")
+
+##------------------------- subroutine initialize -------------------------------------------
+
+  code <- code_add(code,c("\tend type\n\n","\tcontains\n\n",
+                          "\tsubroutine initialize(self,configunit)\n",
+                          "\t\tclass (type_tuddhyb_rodeo), intent(inout), target :: self\n",
+                          "\t\tinteger, intent(in) :: configunit\n"))
+  code <- code_add(code,"\n")
+  ## register state variables
+  code <- code_add(code,paste0("\t\tcall self%register_state_variable(self%id_",
+                        vars$name,",'",vars$name,"','",vars$unit,"','",vars$description,"')"))
+  code <- code_add(code,"\n")
+  ## get and register parameter values
+  code <- code_add(code,paste0("\t\tcall self%get_parameter(self%",pars$name,",'",
+                        pars$name,"','",pars$unit,"','",pars$description,"')"))
+
+  ## if diagnostics are wanted declare diagnostic variables
+  if(diags){
+    ## pelagic diagnostic variables
+    if(any(pros$pela)){
+      code <- code_add(code,paste0("\t\tcall self%register_diagnostic_variable(self%id_",
+                          pros$name[pros$pela],",'",pros$name[pros$pela],
+                          "','", pros$unit[pros$pela],"','",
+                          pros$description[pros$pela],"')"))
+    }
+    ## surface diagnostic variables
+    if(any(pros$surf)){
+      code <- code_add(code,"\n")
+      code <- code_add(code,paste0("\t\tcall self%register_horizontal_diagnostic_variable(self%id_",
+                                 pros$name[pros$surf],",'",pros$name[pros$surf],"','",
+                                 pros$unit[pros$surf],"','",pros$description[pros$surf],"')"))
+
+    }
+    ## bottom diagnostic variables
+    if(any(pros$bot)){
+      code <- code_add(code,"\n")
+      code <- code_add(code,paste0("\t\tcall self%register_horizontal_diagnostic_variable(self%id_",
+                                   pros$name[pros$bot],",'",pros$name[pros$bot],"','",
+                                   pros$unit[pros$bot],"','",pros$description[pros$bot],"')"))
+
+    }
+      code <- code_add(code,"\n\n")
+  }
+
+  ## if there are any register dependencies from physical host model
+  if(any(!is.na(funs$dependency))){
+    code <- code_add(code,paste0("\t\tcall self%register_dependency(self%id_",
+                          funs$name[!is.na(funs$dependency)],",standard_variables%",
+                          funs$dependency[!is.na(funs$dependency)],")"))
+
+    code <- code_add(code,"\n")
+    }
+
+  code <- code_add(code,c("\tend subroutine initialize\n\n","\t! Add model subroutines here.\n"))
+  code <- code_add(code,"\n")
+
+##---------------------------- subroutine do ------------------------------------------------------
+
+  ## pelagic processes
+  if(any(pros$pela)){
+
+    code <- code_add(code,c("\tsubroutine do(self, _ARGUMENTS_DO_)",
+                            "\t\tclass (type_tuddhyb_rodeo),intent(in) :: self",
+                            "\t\t_DECLARE_ARGUMENTS_DO_\n"))
+
+    ## declare processes and variables
+    code <- code_add(code,paste0("\t\treal(rk) :: ",
+                                 c(vars$name[vars$pela],pros$name[pros$pela],
+                                   funs$name[!is.na(funs$dependency)])))
+    code <- code_add(code,"\n")
+
+    code <- code_add(code,"\t\t_LOOP_BEGIN_\n")
+    ## get state variable values
+    code <- code_add(code,paste0("\t\t\t_GET_(self%id_",vars$name[vars$pela],",",
+                                 vars$name[vars$pela],")"))
+
+    code <- code_add(code,"\n")
+    # get dependencie values
+    if(any(!is.na(funs$dependency))){
+      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",funs$name[!is.na(funs$dependency)],", ",
+                            funs$name[!is.na(funs$dependency)],")"))
+      code <- code_add(code,"\n")
+    }
+    ## expression of process rate
+    pros_expr <- pros$expression[pros$pela]
+    pros_expr <- paste0(" ",pros_expr," ")
+    pros_expr <- sapply(pros_expr,function(x)gsub("[*]"," * ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[+]"," + ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[-]"," - ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[/]"," / ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[(]"," ( ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[)]"," ) ",x))
+    ## change names of parameters to self%<name>
+    for (i in 1:length(pars$name)) {
+      pros_expr <-  gsub(pattern = paste0(" ",pars$name[i]," "),
+                         replacement = paste0("self%",pars$name[i]),
+                         pros_expr)
+    }
+    ## add calculation of process rates
+    code <- code_add(code,paste0("\t\t\t",pros$name[!pros$surf]," = ",pros_expr))
+    code <- code_add(code,"\n")
+    # give rates of changes for the state variables
+    rates <- paste0("\t\t\t_SET_ODE_(self%id_",vars$name[vars$pela],", ",
+                          aggregate(list(x=paste0(stoi$process[stoi$pela],
+                                                  " * (",stoi$expression[stoi$pela],")")),
+                                    by=list(stoi$variable[stoi$pela]),paste,collapse=" + ")$x,
+                          ")")
+    code <- code_add(code,rates)
+    code <- code_add(code,"\n")
+
+    if(diags){
+      code <- code_add(code,paste0("\t\t\t_SET_DIAGNOSTIC_(self%id_",pros$name[pros$pela],
+                                   ", ",pros$name[pros$pela],")"))
+      code <- code_add(code,"\n")
+    }
+    code <- code_add(code,"\t\t_LOOP_END_\n\tend subroutine do\n\n")
+  }
+
+##---------------------------- subroutine do_surface ----------------------------------------------
+  if(any(pros$surf)){
+
+    code <- code_add(code,c("\tsubroutine do_surface(self,_ARGUMENTS_DO_SURFACE_)\n",
+                         "\t\tclass (type_tuddhyb_rodeo),intent(in) :: self\n",
+                         "\t\t_DECLARE_ARGUMENTS_DO_SURFACE_\n"))
+    ## declare variables and processes
+    code <- code_add(code,paste0("\t\treal(rk) :: ",
+                                 c(vars$name[vars$surf],pros$name[pros$surf],
+                                   funs$name[!is.na(funs$dependency)])))
+    code <- code_add(code,"\n\t\t_HORIZONTAL_LOOP_BEGIN_\n")
+
+    ## get variable values
+    code <- code_add(code,paste0("\t\t\t_GET_(self%id_",vars$name[vars$surf],",",
+                                 vars$name[vars$surf],")"))
+    code <- code_add(code,"\n")
+    ## get dependency from physical host model
+    if(length(funs$dependency)>1){
+      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",funs$name[!is.na(funs$dependency)],", ",
+                                  funs$name[!is.na(funs$dependency)],")"))
+      code <- code_add(code,"\n")
+    }
+    ## get process expressions
+    ## expression of process rate
+    pros_expr <- pros$expression[pros$surf]
+    pros_expr <- paste0(" ",pros_expr," ")
+    pros_expr <- sapply(pros_expr,function(x)gsub("[*]"," * ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[+]"," + ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[-]"," - ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[/]"," / ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[(]"," ( ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[)]"," ) ",x))
+    ## change names of parameters to self%<name>
+    for (i in 1:length(pars$name)) {
+      pros_expr <-  gsub(pattern = paste0(" ",pars$name[i]," "),
+                         replacement = paste0("self%",pars$name[i]),
+                         pros_expr)
+    }
+    ## add calculation of process rates
+    code <- code_add(code,paste0("\t\t\t",pros$name[pros$surf]," = ",pros_expr))
+    code <- code_add(code,"\n")
+    # calculate rates of surface exchange
+    rates <- paste0("\t\t\t_SET_SURFACE_EXCHANGE_(self%id_",vars$name[vars$surf],", ",
+                    aggregate(list(x=paste0(stoi$process[stoi$surf],
+                                            " * (",stoi$expression[stoi$surf],")")),
+                              by=list(stoi$variable[stoi$surf]),paste,collapse=" + ")$x,
+                    ")")
+    ## add surface exchange rates to code
+    code <- code_add(code,rates)
+    code <- code_add(code,"\n")
+    ## if wanted save process rates
+    if(diags){
+      code <- code_add(code,paste0("\t\t\t_SET_HORIZONTAL_DIAGNOSTIC_(self%id_",
+                                   pros$name[pros$surf],", ",pros$name[pros$surf],")"))
+      code <- code_add(code,"\n")
+    }
+    code <- code_add(code,"\t\t_HORIZONTAL_LOOP_END_\n\tend subroutine do_surface\n\n")
+
+  }
+
+  ##------------------ subroutine do_bottom -------------------------------------------
+
+  if(any(pros$bot)){
+
+    code <- code_add(code,c("\tsubroutine do_bottom(self,_ARGUMENTS_DO_BOTTOM_)\n",
+                            "\t\tclass (type_tuddhyb_rodeo),intent(in) :: self\n",
+                            "\t\t_DECLARE_ARGUMENTS_DO_BOTTOM_\n"))
+    ## declare variables and processes
+    code <- code_add(code,paste0("\t\treal(rk) :: ",
+                                 c(vars$name[vars$bot],pros$name[pros$bot],
+                                   funs$name[!is.na(funs$dependency)])))
+    code <- code_add(code,"\n\t\t_HORIZONTAL_LOOP_BEGIN_\n")
+
+    ## get variable values
+    code <- code_add(code,paste0("\t\t\t_GET_(self%id_",vars$name[vars$bot],",",
+                                 vars$name[vars$bot],")"))
+    code <- code_add(code,"\n")
+    ## get dependency from physical host model
+    if(length(funs$dependency)>1){
+      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",funs$name[!is.na(funs$dependency)],", ",
+                                   funs$name[!is.na(funs$dependency)],")"))
+      code <- code_add(code,"\n")
+    }
+    ## expression of process rate
+    pros_expr <- pros$expression[pros$bot]
+    pros_expr <- paste0(" ",pros_expr," ")
+    pros_expr <- sapply(pros_expr,function(x)gsub("[*]"," * ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[+]"," + ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[-]"," - ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[/]"," / ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[(]"," ( ",x))
+    pros_expr <- sapply(pros_expr,function(x)gsub("[)]"," ) ",x))
+    ## change names of parameters to self%<name>
+    for (i in 1:length(pars$name)) {
+      pros_expr <-  gsub(pattern = paste0(" ",pars$name[i]," "),
+                         replacement = paste0("self%",pars$name[i]),
+                         pros_expr)
+    }
+    ## add calculation of process rates
+    code <- code_add(code,paste0("\t\t\t",pros$name[pros$bot]," = ",pros_expr))
+    code <- code_add(code,"\n")
+    # calculate rates of bottom exchange
+    rates <- paste0("\t\t\t_SET_BOTTOM_EXCHANGE_(self%id_",vars$name[vars$bot],", ",
+                    aggregate(list(x=paste0(stoi$process[stoi$bot],
+                                            " * (",stoi$expression[stoi$bot],")")),
+                              by=list(stoi$variable[stoi$bot]),paste,collapse=" + ")$x,
+                    ")")
+    ## add bottom exchange rates to code
+    code <- code_add(code,rates)
+    code <- code_add(code,"\n")
+    ## if wanted save process rates
+    if(diags){
+      code <- code_add(code,paste0("\t\t\t_SET_HORIZONTAL_DIAGNOSTIC_(self%id_",
+                                   pros$name[pros$bot],", ",pros$name[pros$bot],")"))
+      code <- code_add(code,"\n")
+    }
+    code <- code_add(code,"\t\t_HORIZONTAL_LOOP_END_\n\tend subroutine do_bottom\n")
+
+  }
+
+
+  ##---------------- end of model --------------------------------
+  code <- code_add(code,"\n")
+  code <- code_add(code,"end module")
+
+  code <- fortran.breakLine(code)
+  code <- fortran.breakLine(code)
+
+  cat(paste0("Writing ",file_name," fortran90 file\n"))
+  cat(code,file = file_name)
+
+
+  ## create yaml file
+  cat("Writin fabm.yaml file\n")
+  yaml_s <- "instances:
+   hello:
+    model: tuddhyb/rodeo
+    initialization:"
+  yaml_v <- paste0(paste0("      ",vars$name,": ",vars$default),collapse = "\n")
+  yaml_p <- paste0(paste0("      ",pars$name,": ",pars$default),collapse = "\n")
+
+  yaml <- paste0(yaml_s,"\n",yaml_v,"\n    parameters:\n",yaml_p)
+  cat(yaml,file="fabm.yaml")
+  cat("\nfinished\n")
+}
+
+# add code to code string variable
+
+code_add <- function(code,add){
+  if(length(add)>1){
+    add <- paste0(add,collapse = "\n")
+  }
+  code <- paste0(code,add,collapse = "\n")
+  return(code)
+}
+
+
+# Break long Fortran lines taken from github.com/dkneis/rodeo
+fortran.breakLine <- function(text, conti=" & ", newline="\n\t\t\t") {
+  minlen <- 80
+  buf <- ""
+  from <- 1
+  k <- 0
+  text <- gsub(pattern="[ ]+$", replacement="", x=text)
+  for (i in 1:nchar(text)) {
+    k <- k+1
+    if (substr(text,i,i) %in% c("+","-","*","/",",") && (k >= minlen)) {
+      if (substr(text,i,min(i+1, nchar(text))) != "**") {
+        k <- 0
+        buf <- paste0(buf,substr(text,from,i),conti,newline)
+        from <- i+1
+      }
+    }
+  }
+  if (from <= nchar(text))
+    buf <- paste0(buf,substr(text,from,nchar(text)))
+  return(buf)
+}
