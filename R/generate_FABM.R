@@ -16,7 +16,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   model <- rodeo::rodeo$new(vars,pars,funs,pros,stoi)
 
   ## test if the dependency refere to standard names as definded by FABM
-
+  data(package="FABMrodeo")
   if(any(!is.na(funs$dependency))){
     if(any(!funs$dependency%in%std_names_FABM)){
       stop(paste0("Dependency name must be one of the standard nammes defined by FABM \n",
@@ -121,7 +121,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   ## get and register parameter values
   code <- code_add(code,paste0("\t\tcall self%get_parameter(self%",pars$name,",'",
                         pars$name,"','",pars$unit,"','",pars$description,"')"))
-
+  code <- code_add(code,"\n")
   ## if diagnostics are wanted declare diagnostic variables
   if(diags){
     ## pelagic diagnostic variables
@@ -349,8 +349,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   code <- code_add(code,"\n")
   code <- code_add(code,"end module")
 
-  code <- fortran.breakLine(code)
-  code <- fortran.breakLine(code)
+  #code <- fortran.breakLine(code)
 
   cat(paste0("Writing ",file_name," fortran90 file\n"))
   cat(code,file = file_name)
