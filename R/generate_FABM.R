@@ -16,9 +16,9 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   model <- rodeo::rodeo$new(vars,pars,funs,pros,stoi)
 
   ## test if the dependency refere to standard names as definded by FABM
-  data(package="FABMrodeo")
+
   if(any(!is.na(funs$dependency))){
-    if(any(!funs$dependency%in%std_names_FABM)){
+    if(any(!(funs$dependency %in% std_names_FABM$Variable))){
       stop(paste0("Dependency name must be one of the standard nammes defined by FABM \n",
            "See FABM wiki: ",
            "https://github.com/fabm-model/fabm/wiki/List-of-standard-variables"))
@@ -358,7 +358,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   ## create yaml file
   cat("Writin fabm.yaml file\n")
   yaml_s <- "instances:
-   hello:
+   rodeo:
     model: tuddhyb/rodeo
     initialization:"
   yaml_v <- paste0(paste0("      ",vars$name,": ",vars$default),collapse = "\n")

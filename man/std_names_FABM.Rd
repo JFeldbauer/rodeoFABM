@@ -13,7 +13,7 @@
 \url{https://github.com/fabm-model/fabm/wiki/List-of-standard-variables}
 }
 \usage{
-std_names_FABM
+data(std_names_FABM)
 }
 \description{
 A dataset containing the standard names of dependency

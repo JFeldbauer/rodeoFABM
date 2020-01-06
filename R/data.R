@@ -5,6 +5,8 @@
 #'
 #' @docType data
 #'
+#' @usage data(std_names_FABM)
+#'
 #' @format A character vector with 38 entriey:
 #' \describe{
 #'   \item{names}{name of the variables}
