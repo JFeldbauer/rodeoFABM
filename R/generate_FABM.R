@@ -190,20 +190,22 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
       code <- code_add(code,"\n")
     }
     ## expression of process rate
-    pros_expr <- pros$expression[pros$pela]
-    pros_expr <- paste0(" ",pros_expr," ")
-    pros_expr <- sapply(pros_expr,function(x)gsub("[*]"," * ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[+]"," + ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[-]"," - ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[/]"," / ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[(]"," ( ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[)]"," ) ",x))
-    ## change names of parameters to self%<name>
-    for (i in 1:length(pars$name)) {
-      pros_expr <-  gsub(pattern = paste0(" ",pars$name[i]," "),
-                         replacement = paste0("self%",pars$name[i]),
-                         pros_expr)
-    }
+    # pros_expr <- pros$expression[pros$pela]
+    # pros_expr <- paste0(" ",pros_expr," ")
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[*]"," * ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[+]"," + ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[-]"," - ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[/]"," / ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[(]"," ( ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[)]"," ) ",x))
+    # ## change names of parameters to self%<name>
+    # for (i in 1:length(pars$name)) {
+    #   pros_expr <-  gsub(pattern = paste0(" ",pars$name[i]," "),
+    #                      replacement = paste0("self%",pars$name[i]),
+    #                      pros_expr)
+    # }
+    pros_expr <- add_self(expr = pros$expression[pros$pela],pars)
+
     ## add calculation of process rates
     code <- code_add(code,paste0("\t\t\t",pros$name[!pros$surf]," = ",pros_expr))
     code <- code_add(code,"\n")
@@ -214,11 +216,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                                     by=list(stoi$variable[stoi$pela]),paste,collapse=" + ")$x,
                           ")")
     ## change names of parameters to self%<name>
-    for (i in 1:length(pars$name)) {
-      rates <-  gsub(pattern = paste0(" ",pars$name[i]," "),
-                         replacement = paste0("self%",pars$name[i]),
-                     rates)
-    }
+    rates <- add_self(rates,pars)
     code <- code_add(code,rates)
     code <- code_add(code,"\n")
 
@@ -254,20 +252,21 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     }
     ## get process expressions
     ## expression of process rate
-    pros_expr <- pros$expression[pros$surf]
-    pros_expr <- paste0(" ",pros_expr," ")
-    pros_expr <- sapply(pros_expr,function(x)gsub("[*]"," * ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[+]"," + ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[-]"," - ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[/]"," / ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[(]"," ( ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[)]"," ) ",x))
-    ## change names of parameters to self%<name>
-    for (i in 1:length(pars$name)) {
-      pros_expr <-  gsub(pattern = paste0(" ",pars$name[i]," "),
-                         replacement = paste0("self%",pars$name[i]),
-                         pros_expr)
-    }
+    # pros_expr <- pros$expression[pros$surf]
+    # pros_expr <- paste0(" ",pros_expr," ")
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[*]"," * ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[+]"," + ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[-]"," - ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[/]"," / ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[(]"," ( ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[)]"," ) ",x))
+    # ## change names of parameters to self%<name>
+    # for (i in 1:length(pars$name)) {
+    #   pros_expr <-  gsub(pattern = paste0(" ",pars$name[i]," "),
+    #                      replacement = paste0("self%",pars$name[i]),
+    #                      pros_expr)
+    # }
+    pros_expr <- add_self(pros$expression[pros$surf],pars)
     ## add calculation of process rates
     code <- code_add(code,paste0("\t\t\t",pros$name[pros$surf]," = ",pros_expr))
     code <- code_add(code,"\n")
@@ -278,11 +277,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                               by=list(stoi$variable[stoi$surf]),paste,collapse=" + ")$x,
                     ")")
     ## change names of parameters to self%<name>
-    for (i in 1:length(pars$name)) {
-      rates <-  gsub(pattern = paste0(" ",pars$name[i]," "),
-                     replacement = paste0("self%",pars$name[i]),
-                     rates)
-    }
+    rates <- add_self(rates,pars)
     ## add surface exchange rates to code
     code <- code_add(code,rates)
     code <- code_add(code,"\n")
@@ -320,20 +315,21 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
       code <- code_add(code,"\n")
     }
     ## expression of process rate
-    pros_expr <- pros$expression[pros$bot]
-    pros_expr <- paste0(" ",pros_expr," ")
-    pros_expr <- sapply(pros_expr,function(x)gsub("[*]"," * ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[+]"," + ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[-]"," - ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[/]"," / ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[(]"," ( ",x))
-    pros_expr <- sapply(pros_expr,function(x)gsub("[)]"," ) ",x))
-    ## change names of parameters to self%<name>
-    for (i in 1:length(pars$name)) {
-      pros_expr <-  gsub(pattern = paste0(" ",pars$name[i]," "),
-                         replacement = paste0("self%",pars$name[i]),
-                         pros_expr)
-    }
+    # pros_expr <- pros$expression[pros$bot]
+    # pros_expr <- paste0(" ",pros_expr," ")
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[*]"," * ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[+]"," + ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[-]"," - ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[/]"," / ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[(]"," ( ",x))
+    # pros_expr <- sapply(pros_expr,function(x)gsub("[)]"," ) ",x))
+    # ## change names of parameters to self%<name>
+    # for (i in 1:length(pars$name)) {
+    #   pros_expr <-  gsub(pattern = paste0(" ",pars$name[i]," "),
+    #                      replacement = paste0("self%",pars$name[i]),
+    #                      pros_expr)
+    # }
+    pros_expr <- add_self(pros$expression[pros$bot],pars)
     ## add calculation of process rates
     code <- code_add(code,paste0("\t\t\t",pros$name[pros$bot]," = ",pros_expr))
     code <- code_add(code,"\n")
@@ -344,11 +340,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                               by=list(stoi$variable[stoi$bot]),paste,collapse=" + ")$x,
                     ")")
     ## change names of parameters to self%<name>
-    for (i in 1:length(pars$name)) {
-      rates <-  gsub(pattern = paste0(" ",pars$name[i]," "),
-                     replacement = paste0("self%",pars$name[i]),
-                     rates)
-    }
+    rates <- add_self(rates,pars)
     ## add bottom exchange rates to code
     code <- code_add(code,rates)
     code <- code_add(code,"\n")
@@ -418,4 +410,35 @@ fortran.breakLine <- function(text, conti=" & ", newline="\n\t\t\t") {
   if (from <= nchar(text))
     buf <- paste0(buf,substr(text,from,nchar(text)))
   return(buf)
+}
+
+add_self <- function(expr,pars){
+
+  expr <- sapply(expr,function(x)gsub("[**]"," ^ ",x))
+  expr <- sapply(expr,function(x)gsub("[*]"," * ",x))
+  expr <- sapply(expr,function(x)gsub("[+]"," + ",x))
+  expr <- sapply(expr,function(x)gsub("[-]"," - ",x))
+  expr <- sapply(expr,function(x)gsub("[/]"," / ",x))
+  expr <- sapply(expr,function(x)gsub("[(]"," ( ",x))
+  expr <- sapply(expr,function(x)gsub("[)]"," ) ",x))
+  expr <- sapply(expr,function(x)gsub("  "," ",x))
+  expr <- sapply(expr,function(x)gsub("  "," ",x))
+
+  ## change names of parameters to self%<name>
+  for (i in 1:length(pars$name)) {
+    expr <-  gsub(pattern = paste0(" ",pars$name[i]," "),
+                       replacement = paste0("self%",pars$name[i]),
+                  expr)
+  }
+
+  expr <- sapply(expr,function(x)gsub("[*]"," * ",x))
+  expr <- sapply(expr,function(x)gsub("[+]"," + ",x))
+  expr <- sapply(expr,function(x)gsub("[-]"," - ",x))
+  expr <- sapply(expr,function(x)gsub("[/]"," / ",x))
+  expr <- sapply(expr,function(x)gsub("[(]"," ( ",x))
+  expr <- sapply(expr,function(x)gsub("[)]"," ) ",x))
+  expr <- sapply(expr,function(x)gsub("  "," ",x))
+  expr <- sapply(expr,function(x)gsub("  "," ",x))
+  expr <- sapply(expr,function(x)gsub("[^]"," ** ",x))
+  return(expr)
 }
