@@ -147,11 +147,11 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                                    pros$unit[pros$bot],"','",pros$description[pros$bot],"')"))
 
     }
-      code <- code_add(code,"\n\n")
   }
 
   ## if there are any register dependencies from physical host model
   if(any(!is.na(funs$dependency))){
+    code <- code_add(code,"\n")
     code <- code_add(code,paste0("\t\tcall self%register_dependency(self%id_",
                           funs$name[!is.na(funs$dependency)],",standard_variables%",
                           funs$dependency[!is.na(funs$dependency)],")"))
@@ -239,22 +239,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                                   funs$name[!is.na(funs$dependency)],")"))
       code <- code_add(code,"\n")
     }
-    ## get process expressions
-    ## expression of process rate
-    # pros_expr <- pros$expression[pros$surf]
-    # pros_expr <- paste0(" ",pros_expr," ")
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[*]"," * ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[+]"," + ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[-]"," - ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[/]"," / ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[(]"," ( ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[)]"," ) ",x))
-    # ## change names of parameters to self%<name>
-    # for (i in 1:length(pars$name)) {
-    #   pros_expr <-  gsub(pattern = paste0(" ",pars$name[i]," "),
-    #                      replacement = paste0("self%",pars$name[i]),
-    #                      pros_expr)
-    # }
+
     pros_expr <- add_self(pros$expression[pros$surf],pars)
     ## add calculation of process rates
     code <- code_add(code,paste0("\t\t\t",pros$name[pros$surf]," = ",pros_expr))
@@ -265,7 +250,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                             by=list(stoi$variable[stoi$surf]),paste,collapse=" + ")
 
     # give rates of changes for the state variables
-    rates <- paste0("\t\t\t_SET_ODE_(self%id_",tot_rates$Group.1,", ",
+    rates <- paste0("\t\t\t_SET_SURFACE_EXCHANGE_(self%id_",tot_rates$Group.1,", ",
                     tot_rates$x,
                     ")")
     ## change names of parameters to self%<name>
@@ -306,21 +291,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                                    funs$name[!is.na(funs$dependency)],")"))
       code <- code_add(code,"\n")
     }
-    ## expression of process rate
-    # pros_expr <- pros$expression[pros$bot]
-    # pros_expr <- paste0(" ",pros_expr," ")
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[*]"," * ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[+]"," + ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[-]"," - ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[/]"," / ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[(]"," ( ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[)]"," ) ",x))
-    # ## change names of parameters to self%<name>
-    # for (i in 1:length(pars$name)) {
-    #   pros_expr <-  gsub(pattern = paste0(" ",pars$name[i]," "),
-    #                      replacement = paste0("self%",pars$name[i]),
-    #                      pros_expr)
-    # }
+
     pros_expr <- add_self(pros$expression[pros$bot],pars)
     ## add calculation of process rates
     code <- code_add(code,paste0("\t\t\t",pros$name[pros$bot]," = ",pros_expr))
@@ -331,7 +302,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                             by=list(stoi$variable[stoi$bot]),paste,collapse=" + ")
 
     # give rates of changes for the state variables
-    rates <- paste0("\t\t\t_SET_ODE_(self%id_",tot_rates$Group.1,", ",
+    rates <- paste0("\t\t\t_SET_BOTTOM_EXCHANGE_(self%id_",tot_rates$Group.1,", ",
                     tot_rates$x,
                     ")")
     ## change names of parameters to self%<name>
