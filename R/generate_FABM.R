@@ -190,24 +190,10 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
       code <- code_add(code,"\n")
     }
     ## expression of process rate
-    # pros_expr <- pros$expression[pros$pela]
-    # pros_expr <- paste0(" ",pros_expr," ")
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[*]"," * ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[+]"," + ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[-]"," - ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[/]"," / ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[(]"," ( ",x))
-    # pros_expr <- sapply(pros_expr,function(x)gsub("[)]"," ) ",x))
-    # ## change names of parameters to self%<name>
-    # for (i in 1:length(pars$name)) {
-    #   pros_expr <-  gsub(pattern = paste0(" ",pars$name[i]," "),
-    #                      replacement = paste0("self%",pars$name[i]),
-    #                      pros_expr)
-    # }
     pros_expr <- add_self(expr = pros$expression[pros$pela],pars)
 
     ## add calculation of process rates
-    code <- code_add(code,paste0("\t\t\t",pros$name[!pros$surf]," = ",pros_expr))
+    code <- code_add(code,paste0("\t\t\t",pros$name[pros$pela]," = ",pros_expr))
     code <- code_add(code,"\n")
     # give rates of changes for the state variables
     rates <- paste0("\t\t\t_SET_ODE_(self%id_",vars$name[vars$pela],", ",
@@ -380,7 +366,6 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
 }
 
 # add code to code string variable
-
 code_add <- function(code,add){
   if(length(add)>1){
     add <- paste0(add,collapse = "\n")
@@ -412,6 +397,7 @@ fortran.breakLine <- function(text, conti=" & ", newline="\n\t\t\t") {
   return(buf)
 }
 
+# add "%self" infront of parameter names
 add_self <- function(expr,pars){
   expr <- paste0(" ",expr," ")
   expr <- sapply(expr,function(x)gsub("[\\*]{2}"," ^ ",x))
