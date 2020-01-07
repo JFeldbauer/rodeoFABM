@@ -195,11 +195,14 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     ## add calculation of process rates
     code <- code_add(code,paste0("\t\t\t",pros$name[pros$pela]," = ",pros_expr))
     code <- code_add(code,"\n")
+    # calculate total rates
+    tot_rates <-  aggregate(list(x=paste0(stoi$process[stoi$pela],
+                                          " * (",stoi$expression[stoi$pela],")")),
+                            by=list(stoi$variable[stoi$pela]),paste,collapse=" + ")
+
     # give rates of changes for the state variables
-    rates <- paste0("\t\t\t_SET_ODE_(self%id_",vars$name[vars$pela],", ",
-                          aggregate(list(x=paste0(stoi$process[stoi$pela],
-                                                  " * (",stoi$expression[stoi$pela],")")),
-                                    by=list(stoi$variable[stoi$pela]),paste,collapse=" + ")$x,
+    rates <- paste0("\t\t\t_SET_ODE_(self%id_",tot_rates$Group.1,", ",
+                         tot_rates$x,
                           ")")
     ## change names of parameters to self%<name>
     rates <- add_self(rates,pars)
@@ -256,11 +259,14 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     ## add calculation of process rates
     code <- code_add(code,paste0("\t\t\t",pros$name[pros$surf]," = ",pros_expr))
     code <- code_add(code,"\n")
-    # calculate rates of surface exchange
-    rates <- paste0("\t\t\t_SET_SURFACE_EXCHANGE_(self%id_",vars$name[vars$surf],", ",
-                    aggregate(list(x=paste0(stoi$process[stoi$surf],
-                                            " * (",stoi$expression[stoi$surf],")")),
-                              by=list(stoi$variable[stoi$surf]),paste,collapse=" + ")$x,
+    # calculate total rates
+    tot_rates <-  aggregate(list(x=paste0(stoi$process[stoi$surf],
+                                          " * (",stoi$expression[stoi$surf],")")),
+                            by=list(stoi$variable[stoi$surf]),paste,collapse=" + ")
+
+    # give rates of changes for the state variables
+    rates <- paste0("\t\t\t_SET_ODE_(self%id_",tot_rates$Group.1,", ",
+                    tot_rates$x,
                     ")")
     ## change names of parameters to self%<name>
     rates <- add_self(rates,pars)
@@ -319,11 +325,14 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     ## add calculation of process rates
     code <- code_add(code,paste0("\t\t\t",pros$name[pros$bot]," = ",pros_expr))
     code <- code_add(code,"\n")
-    # calculate rates of bottom exchange
-    rates <- paste0("\t\t\t_SET_BOTTOM_EXCHANGE_(self%id_",vars$name[vars$bot],", ",
-                    aggregate(list(x=paste0(stoi$process[stoi$bot],
-                                            " * (",stoi$expression[stoi$bot],")")),
-                              by=list(stoi$variable[stoi$bot]),paste,collapse=" + ")$x,
+    # calculate total rates
+    tot_rates <-  aggregate(list(x=paste0(stoi$process[stoi$bot],
+                                          " * (",stoi$expression[stoi$bot],")")),
+                            by=list(stoi$variable[stoi$bot]),paste,collapse=" + ")
+
+    # give rates of changes for the state variables
+    rates <- paste0("\t\t\t_SET_ODE_(self%id_",tot_rates$Group.1,", ",
+                    tot_rates$x,
                     ")")
     ## change names of parameters to self%<name>
     rates <- add_self(rates,pars)
