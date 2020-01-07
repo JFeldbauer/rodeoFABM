@@ -413,10 +413,10 @@ fortran.breakLine <- function(text, conti=" & ", newline="\n\t\t\t") {
 }
 
 add_self <- function(expr,pars){
-
-  expr <- sapply(expr,function(x)gsub("[**]"," ^ ",x))
-  expr <- sapply(expr,function(x)gsub("[*]"," * ",x))
-  expr <- sapply(expr,function(x)gsub("[+]"," + ",x))
+  expr <- paste0(" ",expr," ")
+  expr <- sapply(expr,function(x)gsub("[\\*]{2}"," ^ ",x))
+  expr <- sapply(expr,function(x)gsub("[\\*]"," * ",x))
+  expr <- sapply(expr,function(x)gsub("[\\+]"," + ",x))
   expr <- sapply(expr,function(x)gsub("[-]"," - ",x))
   expr <- sapply(expr,function(x)gsub("[/]"," / ",x))
   expr <- sapply(expr,function(x)gsub("[(]"," ( ",x))
@@ -439,6 +439,6 @@ add_self <- function(expr,pars){
   expr <- sapply(expr,function(x)gsub("[)]"," ) ",x))
   expr <- sapply(expr,function(x)gsub("  "," ",x))
   expr <- sapply(expr,function(x)gsub("  "," ",x))
-  expr <- sapply(expr,function(x)gsub("[^]"," ** ",x))
+  expr <- sapply(expr,function(x)gsub("[\\^]"," ** ",x))
   return(expr)
 }
