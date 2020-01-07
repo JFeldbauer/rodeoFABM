@@ -213,6 +213,12 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                                                   " * (",stoi$expression[stoi$pela],")")),
                                     by=list(stoi$variable[stoi$pela]),paste,collapse=" + ")$x,
                           ")")
+    ## change names of parameters to self%<name>
+    for (i in 1:length(pars$name)) {
+      rates <-  gsub(pattern = paste0(" ",pars$name[i]," "),
+                         replacement = paste0("self%",pars$name[i]),
+                     rates)
+    }
     code <- code_add(code,rates)
     code <- code_add(code,"\n")
 
@@ -271,6 +277,12 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                                             " * (",stoi$expression[stoi$surf],")")),
                               by=list(stoi$variable[stoi$surf]),paste,collapse=" + ")$x,
                     ")")
+    ## change names of parameters to self%<name>
+    for (i in 1:length(pars$name)) {
+      rates <-  gsub(pattern = paste0(" ",pars$name[i]," "),
+                     replacement = paste0("self%",pars$name[i]),
+                     rates)
+    }
     ## add surface exchange rates to code
     code <- code_add(code,rates)
     code <- code_add(code,"\n")
@@ -331,6 +343,12 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                                             " * (",stoi$expression[stoi$bot],")")),
                               by=list(stoi$variable[stoi$bot]),paste,collapse=" + ")$x,
                     ")")
+    ## change names of parameters to self%<name>
+    for (i in 1:length(pars$name)) {
+      rates <-  gsub(pattern = paste0(" ",pars$name[i]," "),
+                     replacement = paste0("self%",pars$name[i]),
+                     rates)
+    }
     ## add bottom exchange rates to code
     code <- code_add(code,rates)
     code <- code_add(code,"\n")
