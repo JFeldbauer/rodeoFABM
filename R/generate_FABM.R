@@ -141,8 +141,8 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   var_arg_ad <- aggregate_ad_arg(var_arg_ad)
   ## register state variables
   code <- code_add(code,paste0("\t\tcall self%register_state_variable(self%id_",
-                        vars$name,",'",vars$name,"','",vars$unit,"','",vars$description,
-                        var_arg_ad,"')"))
+                        vars$name,",'",vars$name,"','",vars$unit,"','",vars$description,"'",
+                        var_arg_ad,")"))
   code <- code_add(code,"\n")
   ## get and register parameter values
   code <- code_add(code,paste0("\t\tcall self%get_parameter(self%",pars$name,",'",
@@ -353,6 +353,9 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
 
   #code <- fortran.breakLine(code)
 
+  # set postfix _rk to all numbers
+  code <- chng_num(code)
+
   cat(paste0("Writing ",file_name," fortran90 file\n"))
   cat(code,file = file_name)
 
@@ -456,12 +459,22 @@ aggregate_ad_arg <- function(var_arg_ad){
                     as.character(var_arg_ad[i,!is.na(var_arg_ad[i,])])),2,
                   sum(!is.na(var_arg_ad[i,])),byrow = TRUE)
     tmp <- apply(tmp,2,paste0,collapse=" = ")
-    out[i] <- paste0(tmp,collapse = ", ")
+    out[i] <- paste0(tmp,collapse = " , ")
     out[i] <- gsub("TRUE",".true.",out[i])
     out[i] <- gsub("FALSE",".false.",out[i])
     if(nchar(out[i])>0){
-      out[i] <- paste0(", ",out[i])
+      out[i] <- paste0(" , ",out[i])
     }
   }
   return(out)
 }
+
+chng_num <- function(code){
+  # make all integers to decimals
+  code <- gsub("(\\s+\\-*\\s*[0-9]+)\\s+","\\1.0 ",code)
+  # add postfix _rk to all decimals
+  code <- gsub("(\\s+\\-*[0-9]+\\.[0-9]+)","\\1_rk",code)
+
+
+}
+
