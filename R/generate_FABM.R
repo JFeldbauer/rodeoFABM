@@ -120,9 +120,17 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                           "\t\tclass (type_tuddhyb_rodeo), intent(inout), target :: self\n",
                           "\t\tinteger, intent(in) :: configunit\n"))
   code <- code_add(code,"\n")
+  ## set state variable additional arguments
+  # allowed argument names
+  args_names <- c("minimum","maximum","vertical_movement","specific_light_extinction",
+    "no_precipitation_dilution","no_river_dilution")
+
+  var_arg_ad <- vars[,colnames(vars) %in% args_names]
+  var_arg_ad <- aggregate_ad_arg(var_arg_ad)
   ## register state variables
   code <- code_add(code,paste0("\t\tcall self%register_state_variable(self%id_",
-                        vars$name,",'",vars$name,"','",vars$unit,"','",vars$description,"')"))
+                        vars$name,",'",vars$name,"','",vars$unit,"','",vars$description,
+                        var_arg_ad,"')"))
   code <- code_add(code,"\n")
   ## get and register parameter values
   code <- code_add(code,paste0("\t\tcall self%get_parameter(self%",pars$name,",'",
@@ -425,4 +433,23 @@ chk_units <- function(unit,dom){
                    " seem not to be in x per second. FABM demands that the rate of change in",
                    " the processes is in per second. Please change the unit (and value)"))
   }
+}
+
+## aggregate additional arguments to one string per variable
+aggregate_ad_arg <- function(var_arg_ad){
+
+  out <- rep("",nrow(var_arg_ad))
+  for (i in 1:nrow(var_arg_ad)) {
+    tmp <- matrix(c(colnames(var_arg_ad)[!is.na(var_arg_ad[i,])],
+                    as.character(var_arg_ad[i,!is.na(var_arg_ad[i,])])),2,
+                  sum(!is.na(var_arg_ad[i,])),byrow = TRUE)
+    tmp <- apply(tmp,2,paste0,collapse=" = ")
+    out[i] <- paste0(tmp,collapse = ", ")
+    out[i] <- gsub("TRUE",".true.",out[i])
+    out[i] <- gsub("FALSE",".false.",out[i])
+    if(nchar(out[i])>0){
+      out[i] <- paste0(", ",out[i])
+    }
+  }
+  return(out)
 }
