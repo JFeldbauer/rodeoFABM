@@ -24,6 +24,12 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
            "https://github.com/fabm-model/fabm/wiki/List-of-standard-variables"))
     }
   }
+
+  ## check if units are in per second
+  chk_units(pars,"parameter")
+  chk_units(pros,"process")
+
+
   cat("Model input OK\n")
 
   ## write switches for surface processes
@@ -407,4 +413,16 @@ add_self <- function(expr,pars){
   expr <- sapply(expr,function(x)gsub("  "," ",x))
   expr <- sapply(expr,function(x)gsub("[\\^]"," ** ",x))
   return(expr)
+}
+
+## check if units are using seconds as time
+chk_units <- function(unit,dom){
+
+  id <- grep("/d",unit$unit)
+  id <- c(id,grep("/h",unit$unit))
+  if(length(id)>0){
+    warning(paste0("Units of ",dom," ",paste0(unit$name[id],collapse=", "),
+                   " seem not to be in x per second. FABM demands that the rate of change in",
+                   " the processes is in per second. Please change the unit (and value)"))
+  }
 }
