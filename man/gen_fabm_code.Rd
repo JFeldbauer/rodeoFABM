@@ -28,4 +28,19 @@ gen_fabm_code(
 \description{
 This function creates fortran90 FABM code from data.frames.
 }
+\examples{
+\dontrun{
+odf_file <- "simple_model.ods"
+vars <- read_ods(odf_file,1)
+pars <- read_ods(odf_file,2)
+funs <- read_ods(odf_file,3)
+pros <- read_ods(odf_file,4)
+stoi <- read_ods(odf_file,5)
+
+gen_fabm_code(vars,pars,funs,pros,stoi,"simple_model.f90",diags = TRUE)
+}
+}
+\author{
+Johannes Feldbauer
+}
 \keyword{FABM}
