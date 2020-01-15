@@ -7,7 +7,19 @@
 #' @param pros data.frame containing the processes
 #' @param stoi data.frame containing the stoichiometry
 #' @keywords FABM
+#' @author Johannes Feldbauer
 #' @export
+#' @examples
+#' \dontrun{
+#' odf_file <- "simple_model.ods"
+#' vars <- read_ods(odf_file,1)
+#' pars <- read_ods(odf_file,2)
+#' funs <- read_ods(odf_file,3)
+#' pros <- read_ods(odf_file,4)
+#' stoi <- read_ods(odf_file,5)
+#'
+#' gen_fabm_code(vars,pars,funs,pros,stoi,"simple_model.f90",diags = TRUE)
+#' }
 
 gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=TRUE){
 
