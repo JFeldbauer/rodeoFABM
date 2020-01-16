@@ -20,9 +20,9 @@ library(readODS)
 library(rodeoFABM)
 
 # copy example ods file
-example_model <- system.file("extdata\\simple_model.ods", package= 'rodeoFABM')
+example_model <- system.file("extdata//", package= 'rodeoFABM')
 dir.create('example') # Create example folder
-file.copy(from = example_model, to = 'example')
+file.copy(from = example_model, to = 'example',recursive = TRUE)
 setwd('example') # Change working directory to example folder
 
 # read in example ods file
