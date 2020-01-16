@@ -2,7 +2,7 @@
 % Please edit documentation in R/generate_FABM.R
 \name{gen_fabm_code}
 \alias{gen_fabm_code}
-\title{Function to generate FABM code}
+\title{Function to generate FABM source code}
 \usage{
 gen_fabm_code(
   vars,
@@ -24,12 +24,27 @@ gen_fabm_code(
 \item{pros}{data.frame containing the processes}
 
 \item{stoi}{data.frame containing the stoichiometry}
+
+\item{file_name}{Name of the text file in wich the source code is written}
+
+\item{diags}{Boolean: should the process rates be stored in diagnostic variables? Defaults to TRUE}
 }
 \description{
 This function creates fortran90 FABM code from data.frames.
+Additionally a fabm.yaml control file for FABM is generated
 }
 \examples{
 \dontrun{
+library(readODS)
+library(rodeoFABM)
+
+# copy example ods file
+example_model <- system.file("extdata//", package= 'rodeoFABM')
+dir.create('example') # Create example folder
+file.copy(from = example_model, to = 'example',recursive = TRUE)
+setwd('example') # Change working directory to example folder
+
+# read in example ods file
 odf_file <- "simple_model.ods"
 vars <- read_ods(odf_file,1)
 pars <- read_ods(odf_file,2)
@@ -37,6 +52,7 @@ funs <- read_ods(odf_file,3)
 pros <- read_ods(odf_file,4)
 stoi <- read_ods(odf_file,5)
 
+# generate fabm code
 gen_fabm_code(vars,pars,funs,pros,stoi,"simple_model.f90",diags = TRUE)
 }
 }
