@@ -1,6 +1,7 @@
-#' Function to generate FABM code
+#' Function to generate FABM source code
 #'
 #' This function creates fortran90 FABM code from data.frames.
+#' Additionally a fabm.yaml control file for FABM is generated
 #' @param vars data.frame containing the state variables
 #' @param pars data.frame containing the parameters
 #' @param funs data.frame containing the functions
@@ -11,6 +12,16 @@
 #' @export
 #' @examples
 #' \dontrun{
+#' library(readODS)
+#' library(rodeoFABM)
+#'
+#' # copy example ods file
+#' example_model <- system.file("extdata//", package= 'rodeoFABM')
+#' dir.create('example') # Create example folder
+#' file.copy(from = example_model, to = 'example',recursive = TRUE)
+#' setwd('example') # Change working directory to example folder
+#'
+#' # read in example ods file
 #' odf_file <- "simple_model.ods"
 #' vars <- read_ods(odf_file,1)
 #' pars <- read_ods(odf_file,2)
@@ -18,6 +29,7 @@
 #' pros <- read_ods(odf_file,4)
 #' stoi <- read_ods(odf_file,5)
 #'
+#' # generate fabm code
 #' gen_fabm_code(vars,pars,funs,pros,stoi,"simple_model.f90",diags = TRUE)
 #' }
 

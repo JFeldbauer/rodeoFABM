@@ -4,7 +4,7 @@ tool for creating fortran code for a FABM biogeochemical model from data.frames.
 ## installation
 you can install `rodeoFABM` from github using:
 
-```R
+```
 install_packages("devtools")
 devtools::install_github("JFeldbauer/rodeoFABM")
 ```
@@ -15,7 +15,7 @@ devtools::install_github("JFeldbauer/rodeoFABM")
 
 to generate FABM code from data.frames (e.g. storred in a Libre Office spread sheet) use:
 
-```R
+```
 library(readODS)
 library(rodeoFABM)
 
@@ -43,4 +43,4 @@ at first you need to create a new institut and make FABM aware of your model: se
 
 then you need move the file into the institut directory of FABM and compile your physical host model together with FABM
 
-Compilation instructions for GOTM under Linux/Mac can be found [here](https://gotm.net/software/linux/) and for Windows (here)[https://gotm.net/software/windows/]
+Compilation instructions for GOTM under Linux/Mac can be found [here](https://gotm.net/software/linux/) and for Windows [here](https://gotm.net/software/windows/)
