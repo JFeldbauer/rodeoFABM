@@ -1,12 +1,12 @@
-Package: FABMrodeo
+Package: rodeoFABM
 Title: Create FABM fortran90 code from data.frames.
-Version: 0.1.2
+Version: 0.1.3
 Authors@R: 
     person(given = "Johannes",
            family = "Feldbauer",
            role = c("aut", "cre"),
            email = "johannes.feldbauer@tu-dresden.de",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID = "000-0002-8238-5375"))
 Description: Create FABM fortran90 code from data.frames.
 License: GPL (>= 2)
 Encoding: UTF-8
