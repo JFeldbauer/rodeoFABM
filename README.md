@@ -4,7 +4,7 @@ tool for creating fortran code for a FABM biogeochemical model from data.frames.
 ## installation
 you can install `rodeoFABM` from github using:
 
-```
+```r
 install_packages("devtools")
 devtools::install_github("JFeldbauer/rodeoFABM")
 ```
@@ -15,7 +15,7 @@ devtools::install_github("JFeldbauer/rodeoFABM")
 
 to generate FABM code from data.frames (e.g. storred in a Libre Office spread sheet) use:
 
-```
+```r
 library(readODS)
 library(rodeoFABM)
 
