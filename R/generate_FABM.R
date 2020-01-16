@@ -7,6 +7,8 @@
 #' @param funs data.frame containing the functions
 #' @param pros data.frame containing the processes
 #' @param stoi data.frame containing the stoichiometry
+#' @param file_name Name of the text file in wich the source code is written
+#' @param diags Boolean: should the process rates be stored in diagnostic variables? Defaults to TRUE
 #' @keywords FABM
 #' @author Johannes Feldbauer
 #' @export
