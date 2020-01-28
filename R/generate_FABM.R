@@ -84,6 +84,23 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   stoi$pela <- stoi$process%in%pros$name[!pros$bot&!pros$surf]
   pros$pela <- pros$name%in%stoi$process[stoi$process%in%pros$name[!pros$bot&!pros$surf]]
 
+
+  # if there are constant sinking velocities create parameter
+  if(sum(!is.na(vars$vertical_movement))>0){
+    sed_par <- paste0("sed_",vars$name[!is.na(vars$vertical_movement)])
+    if(any(sed_par %in% pars$name)){
+      sed_par[sed_par %in% pars$name] <- paste0(sed_par[sed_par %in% pars$name],"_autogen")
+    }
+    pars <- rbind(pars,data.frame(name = sed_par,
+                                  unit = rep("m/s",length(sed_par)),
+                                  description = paste0("[Auto generated]: ",
+                                                       "constant sedimentation velocity ",
+                                                       "for variable ",
+                                                       vars$name[!is.na(vars$vertical_movement)]),
+                                  default = vars$vertical_movement[!is.na(vars$vertical_movement)]))
+    vars$vertical_movement[!is.na(vars$vertical_movement)] <- sed_par
+    }
+
   ##------------- start code writing -------------------------------------------------
   code <- paste0('#include "fabm_driver.h"\n','module tuddhyb_rodeo\n',
                  '\tuse fabm_types\n', '\timplicit none\n',  '\tprivate\n',
@@ -125,6 +142,10 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   ## declare model procedures
   code <- code_add(code,c("\n\tcontains\n","\t\t! Reference model procedures here.",
                           "\t\tprocedure :: initialize\n"))
+  ## if there are sinking/floating state variables
+  if(sum(!is.na(vars$vertical_movement))>0){
+    code <- code_add(code,"\t\tprocedure :: get_vertical_movement\n")
+  }
   ## if there are pelagic processes declare do
   if(any(vars$pela)){
     code <- code_add(code,"\t\tprocedure :: do\n")
@@ -145,10 +166,15 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                           "\tsubroutine initialize(self,configunit)\n",
                           "\t\tclass (type_tuddhyb_rodeo), intent(inout), target :: self\n",
                           "\t\tinteger, intent(in) :: configunit\n"))
+
+  code <- code_add(code,"\n")
+  ## get and register parameter values
+  code <- code_add(code,paste0("\t\tcall self%get_parameter(self%",pars$name,",'",
+                        pars$name,"','",pars$unit,"','",pars$description,"')"))
   code <- code_add(code,"\n")
   ## set state variable additional arguments
   # allowed argument names
-  args_names <- c("minimum","maximum","vertical_movement","specific_light_extinction",
+  args_names <- c("minimum","maximum","specific_light_extinction",
     "no_precipitation_dilution","no_river_dilution")
 
   var_arg_ad <- vars[,colnames(vars) %in% args_names]
@@ -156,11 +182,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   ## register state variables
   code <- code_add(code,paste0("\t\tcall self%register_state_variable(self%id_",
                         vars$name,",'",vars$name,"','",vars$unit,"','",vars$description,"'",
-                        var_arg_ad,")"))
-  code <- code_add(code,"\n")
-  ## get and register parameter values
-  code <- code_add(code,paste0("\t\tcall self%get_parameter(self%",pars$name,",'",
-                        pars$name,"','",pars$unit,"','",pars$description,"')"))
+                        var_arg_ad," )"))
   code <- code_add(code,"\n")
   ## if diagnostics are wanted declare diagnostic variables
   if(diags){
@@ -198,9 +220,25 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
 
     code <- code_add(code,"\n")
     }
-
+  code <- code_add(code,"\n")
   code <- code_add(code,c("\tend subroutine initialize\n\n","\t! Add model subroutines here.\n"))
   code <- code_add(code,"\n")
+##---------------------------- subroutine get_vertical_movement -----------------------------------
+
+  if(sum(!is.na(vars$vertical_movement))>0){
+    code <- code_add(code,paste0("\tsubroutine get_vertical_movement(self",
+                                 ", _ARGUMENTS_GET_VERTICAL_MOVEMENT_)\n\n",
+                                 "\t\tclass (type_tuddhyb_rodeo), intent(in) :: self\n\n",
+                                 "\t\t_DECLARE_ARGUMENTS_GET_VERTICAL_MOVEMENT_\n\n"))
+
+    code <- code_add(code,paste0("\t\t_LOOP_BEGIN_\n"))
+    code <- code_add(code,paste0("\t\t_SET_VERTICAL_MOVEMENT_( self%id_",
+                                 vars$name[!is.na(vars$vertical_movement)],
+                                 ", self%",vars$vertical_movement[!is.na(vars$vertical_movement)],
+                                 ")\n"))
+    code <- code_add(code,paste0("\t\t_LOOP_END_\n\n",
+                                 "\tend subroutine get_vertical_movement\n\n"))
+  }
 
 ##---------------------------- subroutine do ------------------------------------------------------
 

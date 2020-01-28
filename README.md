@@ -43,4 +43,39 @@ at first you need to create a new institut and make FABM aware of your model: se
 
 then you need move the file into the institut directory of FABM and compile your physical host model together with FABM
 
-Compilation instructions for GOTM under Linux/Mac can be found [here](https://gotm.net/software/linux/) and for Windows [here](https://gotm.net/software/windows/)
+#### GOTM compilation in Linux
+
+clone github repo
+```sh
+git clone --recursive https://github.com/gotm-model/code.git gotm
+```
+go into the source dirwctory
+```sh
+cd gotm
+```
+switch to lake branch
+```sh
+git checkout origin/lake
+```
+fetch submodules
+```sh
+git submodule update --init --recursive
+```
+create and switch into build folder
+```sh
+cd .. && mkdir build && cd build
+```
+build make files using cmake with correct flags for FABM and STIM
+```sh
+cmake ../gotm -DGOTM_USE_FABM=on -DGOTM_USE_STIM=on
+```
+build executable
+```sh
+make
+```
+ once you have compiled GOTM and want to update your FABM model you just need to store your model.f90 (or whatever you call it) text file in `gotm/extern/fabm/src/models/your_institut_folder` and run `make` in the build folder again.
+
+
+#### GOTM compilation in Windows
+
+Compilation instructions for GOTM for Windows are available [here](https://gotm.net/software/windows/). You also need to switch to the lake branch
