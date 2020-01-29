@@ -44,7 +44,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   ## test if the dependency refere to standard names as definded by FABM
 
   if(any(!is.na(funs$dependency))){
-    if(any(!(funs$dependency %in% std_names_FABM$Variable))){
+    if(any(!(funs$dependency[!is.na(funs$dependency)] %in% std_names_FABM$Variable))){
       stop(paste0("Dependency name must be one of the standard nammes defined by FABM \n",
            "See FABM wiki: ",
            "https://github.com/fabm-model/fabm/wiki/List-of-standard-variables"))
@@ -58,48 +58,73 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
 
   cat("Model input OK\n")
 
+  ## write switches for sedimentation processes
+  if(any(!is.na(pros$sedi))){
+    pros$sedi[is.na(pros$sedi)] <- FALSE
+    vars$sedi <- vars$name %in% stoi$variable[stoi$process %in% pros$name[pros$sedi]]
+    stoi$sedi <- stoi$process %in% pros$name[pros$sedi]
+    #stoi <- stoi[!stoi$sedi,]
+    funs$sedi <-  sapply(funs$name,function(x)any(grepl(paste0("\\<",
+                               x,"\\>"),pros$expression) & pros$sedi))
+  } else {
+    pros$sedi <- FALSE
+    vars$sedi <- FALSE
+    stoi$sedi <- FALSE
+    funs$sedi <- FALSE
+  }
   ## write switches for surface processes
   if(any(!is.na(pros$surf))){
     pros$surf[is.na(pros$surf)] <- FALSE
-    vars$surf <- vars$name%in%stoi$variable[stoi$process%in%pros$name[pros$surf]]
+    vars$surf <- vars$name %in% stoi$variable[stoi$process %in% pros$name[pros$surf]]
     stoi$surf <- stoi$process%in%pros$name[pros$surf]
+    funs$surf <-  sapply(funs$name,function(x)any(grepl(paste0("\\<",
+                                                               x,"\\>"),
+                                                        pros$expression) & pros$surf))
   } else {
     pros$surf <- FALSE
     vars$surf <- FALSE
     stoi$surf <- FALSE
+    funs$surf <- FALSE
   }
-  ## write switches for surface processes
+  ## write switches for bottom processes
   if(any(!is.na(pros$bot))){
     pros$bot[is.na(pros$bot)] <- FALSE
     vars$bot <- vars$name%in%stoi$variable[stoi$process%in%pros$name[pros$bot]]
     stoi$bot <- stoi$process%in%pros$name[pros$bot]
+    funs$bot <-  sapply(funs$name,function(x)any(grepl(paste0("\\<",
+                                                               x,"\\>"),
+                                                        pros$expression) & pros$bot))
   } else {
     pros$bot <- FALSE
     vars$bot <- FALSE
     stoi$bot <- FALSE
+    funs$bot <- FALSE
   }
 
   ## write switches for pelagic processes
   vars$pela <- vars$name%in%stoi$variable[stoi$process%in%pros$name[!pros$bot&!pros$surf]]
   stoi$pela <- stoi$process%in%pros$name[!pros$bot&!pros$surf]
   pros$pela <- pros$name%in%stoi$process[stoi$process%in%pros$name[!pros$bot&!pros$surf]]
+  funs$pela <-  sapply(funs$name,function(x)any(grepl(paste0("\\<",
+                                                            x,"\\>"),
+                                                     pros$expression) & pros$pela))
 
 
-  # if there are constant sinking velocities create parameter
-  if(sum(!is.na(vars$vertical_movement))>0){
-    sed_par <- paste0("sed_",vars$name[!is.na(vars$vertical_movement)])
-    if(any(sed_par %in% pars$name)){
-      sed_par[sed_par %in% pars$name] <- paste0(sed_par[sed_par %in% pars$name],"_autogen")
-    }
-    pars <- rbind(pars,data.frame(name = sed_par,
-                                  unit = rep("m/s",length(sed_par)),
-                                  description = paste0("[Auto generated]: ",
-                                                       "constant sedimentation velocity ",
-                                                       "for variable ",
-                                                       vars$name[!is.na(vars$vertical_movement)]),
-                                  default = vars$vertical_movement[!is.na(vars$vertical_movement)]))
-    vars$vertical_movement[!is.na(vars$vertical_movement)] <- sed_par
-    }
+  # # if there are constant sinking velocities create parameter
+  # if(sum(!is.na(vars$vertical_movement))>0){
+  #   sed_par <- paste0("sed_",vars$name[!is.na(vars$vertical_movement)])
+  #   if(any(sed_par %in% pars$name)){
+  #     sed_par[sed_par %in% pars$name] <- paste0(sed_par[sed_par %in% pars$name],"_autogen")
+  #   }
+  #   pars <- rbind(pars,data.frame(name = sed_par,
+  #                                 unit = rep("m/s",length(sed_par)),
+  #                                 description = paste0("[Auto generated]: ",
+  #                                                      "constant sedimentation velocity ",
+  #                                                      "for variable ",
+  #                                                      vars$name[!is.na(vars$vertical_movement)]),
+  #                                 default = vars$vertical_movement[!is.na(vars$vertical_movement)]))
+  #   vars$vertical_movement[!is.na(vars$vertical_movement)] <- sed_par
+  #   }
 
   ##------------- start code writing -------------------------------------------------
   code <- paste0('#include "fabm_driver.h"\n','module tuddhyb_rodeo\n',
@@ -143,7 +168,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   code <- code_add(code,c("\n\tcontains\n","\t\t! Reference model procedures here.",
                           "\t\tprocedure :: initialize\n"))
   ## if there are sinking/floating state variables
-  if(sum(!is.na(vars$vertical_movement))>0){
+  if(any(pros$sedi)){
     code <- code_add(code,"\t\tprocedure :: get_vertical_movement\n")
   }
   ## if there are pelagic processes declare do
@@ -223,19 +248,58 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   code <- code_add(code,"\n")
   code <- code_add(code,c("\tend subroutine initialize\n\n","\t! Add model subroutines here.\n"))
   code <- code_add(code,"\n")
+
 ##---------------------------- subroutine get_vertical_movement -----------------------------------
 
-  if(sum(!is.na(vars$vertical_movement))>0){
+  if(any(pros$sedi)){
     code <- code_add(code,paste0("\tsubroutine get_vertical_movement(self",
                                  ", _ARGUMENTS_GET_VERTICAL_MOVEMENT_)\n\n",
                                  "\t\tclass (type_tuddhyb_rodeo), intent(in) :: self\n\n",
-                                 "\t\t_DECLARE_ARGUMENTS_GET_VERTICAL_MOVEMENT_\n\n"))
+                                 "\t\t_DECLARE_ARGUMENTS_GET_VERTICAL_MOVEMENT_\n"))
+    ## is the variable within the process description?
+    vars_sedi <- sapply(vars$name,function(x)any(grepl(paste0("\\<",
+                                                              x,"\\>"),
+                                                       pros$expression) & pros$sedi))
+    ## declare processes and variables
+    code <- code_add(code,paste0("\t\treal(rk) :: ",
+                                 c(vars$name[vars_sedi],pros$name[pros$sedi],
+                                   funs$name[!is.na(funs$dependency)&funs$sedi])))
+    code <- code_add(code,"\n")
 
     code <- code_add(code,paste0("\t\t_LOOP_BEGIN_\n"))
-    code <- code_add(code,paste0("\t\t_SET_VERTICAL_MOVEMENT_( self%id_",
-                                 vars$name[!is.na(vars$vertical_movement)],
-                                 ", self%",vars$vertical_movement[!is.na(vars$vertical_movement)],
-                                 ")\n"))
+
+    ## get state variable values
+    if(sum(vars_sedi)>0){
+      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",vars$name[vars$sedi],",",
+                                   vars$name[vars$sedi],")"))
+      code <- code_add(code,"\n")
+    }
+    ## get dependencie values
+    if(any(!is.na(funs$dependency)&funs$sedi)){
+      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",
+                                   funs$name[!is.na(funs$dependency)&funs$sedi],", ",
+                                   funs$name[!is.na(funs$dependency)&funs$sedi],")"))
+      code <- code_add(code,"\n")
+    }
+    ## expression of process rate
+    pros_expr <- add_self(expr = pros$expression[pros$sedi],pars)
+
+    ## add calculation of process rates
+    code <- code_add(code,paste0("\t\t\t",pros$name[pros$sedi]," = ",pros_expr))
+    code <- code_add(code,"\n")
+    # calculate total rates
+    tot_rates <-  aggregate(list(x=paste0(stoi$process[stoi$sedi],
+                                          " * (",stoi$expression[stoi$sedi],")")),
+                            by=list(stoi$variable[stoi$sedi]),paste,collapse=" + ")
+
+    # give rates of changes for the state variables
+    rates <- paste0("\t\t\t_SET_VERTICAL_MOVEMENT_(self%id_",tot_rates$Group.1,", ",
+                    tot_rates$x,
+                    ")\n")
+    ## change names of parameters to self%<name>
+    rates <- add_self(rates,pars)
+    ## add to code
+    code <- code_add(code,rates)
     code <- code_add(code,paste0("\t\t_LOOP_END_\n\n",
                                  "\tend subroutine get_vertical_movement\n\n"))
   }
@@ -252,7 +316,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     ## declare processes and variables
     code <- code_add(code,paste0("\t\treal(rk) :: ",
                                  c(vars$name[vars$pela],pros$name[pros$pela],
-                                   funs$name[!is.na(funs$dependency)])))
+                                   funs$name[!is.na(funs$dependency)&funs$pela])))
     code <- code_add(code,"\n")
 
     code <- code_add(code,"\t\t_LOOP_BEGIN_\n")
@@ -262,9 +326,10 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
 
     code <- code_add(code,"\n")
     # get dependencie values
-    if(any(!is.na(funs$dependency))){
-      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",funs$name[!is.na(funs$dependency)],", ",
-                            funs$name[!is.na(funs$dependency)],")"))
+    if(any(!is.na(funs$dependency)&funs$pela)){
+      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",
+                                   funs$name[!is.na(funs$dependency)&funs$pela],", ",
+                            funs$name[!is.na(funs$dependency)&funs$pela],")"))
       code <- code_add(code,"\n")
     }
     ## expression of process rate
@@ -304,7 +369,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     ## declare variables and processes
     code <- code_add(code,paste0("\t\treal(rk) :: ",
                                  c(vars$name[vars$surf],pros$name[pros$surf],
-                                   funs$name[!is.na(funs$dependency)])))
+                                   funs$name[!is.na(funs$dependency)&funs$surf])))
     code <- code_add(code,"\n\t\t_HORIZONTAL_LOOP_BEGIN_\n")
 
     ## get variable values
@@ -312,9 +377,10 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                                  vars$name[vars$surf],")"))
     code <- code_add(code,"\n")
     ## get dependency from physical host model
-    if(length(funs$dependency)>1){
-      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",funs$name[!is.na(funs$dependency)],", ",
-                                  funs$name[!is.na(funs$dependency)],")"))
+    if(any(!is.na(funs$dependency)&funs$surf)){
+      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",
+                                   funs$name[!is.na(funs$dependency)&funs$surf],", ",
+                                  funs$name[!is.na(funs$dependency)&funs$surf],")"))
       code <- code_add(code,"\n")
     }
 
@@ -356,7 +422,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     ## declare variables and processes
     code <- code_add(code,paste0("\t\treal(rk) :: ",
                                  c(vars$name[vars$bot],pros$name[pros$bot],
-                                   funs$name[!is.na(funs$dependency)])))
+                                   funs$name[!is.na(funs$dependency)&funs$bot])))
     code <- code_add(code,"\n\t\t_HORIZONTAL_LOOP_BEGIN_\n")
 
     ## get variable values
@@ -364,9 +430,10 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                                  vars$name[vars$bot],")"))
     code <- code_add(code,"\n")
     ## get dependency from physical host model
-    if(length(funs$dependency)>1){
-      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",funs$name[!is.na(funs$dependency)],", ",
-                                   funs$name[!is.na(funs$dependency)],")"))
+    if(any(!is.na(funs$dependency)&funs$bot)){
+      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",
+                                   funs$name[!is.na(funs$dependency)&funs$bot],", ",
+                                   funs$name[!is.na(funs$dependency)&funs$bot],")"))
       code <- code_add(code,"\n")
     }
 
