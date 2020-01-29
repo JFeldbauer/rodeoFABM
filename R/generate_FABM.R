@@ -102,29 +102,14 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   }
 
   ## write switches for pelagic processes
-  vars$pela <- vars$name%in%stoi$variable[stoi$process%in%pros$name[!pros$bot&!pros$surf]]
-  stoi$pela <- stoi$process%in%pros$name[!pros$bot&!pros$surf]
-  pros$pela <- pros$name%in%stoi$process[stoi$process%in%pros$name[!pros$bot&!pros$surf]]
+  vars$pela <- vars$name %in% stoi$variable[stoi$process %in%
+                                              pros$name[!pros$bot&!pros$surf&!pros$sedi]]
+  stoi$pela <- stoi$process %in% pros$name[!pros$bot&!pros$surf&!pros$sedi]
+  pros$pela <- pros$name %in% stoi$process[stoi$process %in%
+                                             pros$name[!pros$bot&!pros$surf&!pros$sedi]]
   funs$pela <-  sapply(funs$name,function(x)any(grepl(paste0("\\<",
                                                             x,"\\>"),
                                                      pros$expression) & pros$pela))
-
-
-  # # if there are constant sinking velocities create parameter
-  # if(sum(!is.na(vars$vertical_movement))>0){
-  #   sed_par <- paste0("sed_",vars$name[!is.na(vars$vertical_movement)])
-  #   if(any(sed_par %in% pars$name)){
-  #     sed_par[sed_par %in% pars$name] <- paste0(sed_par[sed_par %in% pars$name],"_autogen")
-  #   }
-  #   pars <- rbind(pars,data.frame(name = sed_par,
-  #                                 unit = rep("m/s",length(sed_par)),
-  #                                 description = paste0("[Auto generated]: ",
-  #                                                      "constant sedimentation velocity ",
-  #                                                      "for variable ",
-  #                                                      vars$name[!is.na(vars$vertical_movement)]),
-  #                                 default = vars$vertical_movement[!is.na(vars$vertical_movement)]))
-  #   vars$vertical_movement[!is.na(vars$vertical_movement)] <- sed_par
-  #   }
 
   ##------------- start code writing -------------------------------------------------
   code <- paste0('#include "fabm_driver.h"\n','module tuddhyb_rodeo\n',
