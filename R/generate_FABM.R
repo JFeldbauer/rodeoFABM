@@ -111,6 +111,13 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                                                             x,"\\>"),
                                                      pros$expression) & pros$pela))
 
+  ## remove "time" argument from dependency functions
+  for (i in 1:sum(!is.na(funs$dependency))) {
+    pros$expression <- gsub(paste0(funs$name[!is.na(funs$dependency)][i],"\\(\\s*time\\s*\\)"),
+                            funs$name[!is.na(funs$dependency)][i],pros$expression)
+  }
+
+
   ##------------- start code writing -------------------------------------------------
   code <- paste0('#include "fabm_driver.h"\n','module tuddhyb_rodeo\n',
                  '\tuse fabm_types\n', '\timplicit none\n',  '\tprivate\n',
