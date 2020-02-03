@@ -75,28 +75,42 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   ## write switches for surface processes
   if(any(!is.na(pros$surf))){
     pros$surf[is.na(pros$surf)] <- FALSE
+    if(length(vars$surf)>0){
+      vars$surfvar <- vars$surf
+      vars$surfvar[is.na(vars$surf)] <- FALSE
+    } else {
+      vars$surfvar <- FALSE
+    }
     vars$surf <- vars$name %in% stoi$variable[stoi$process %in% pros$name[pros$surf]]
-    stoi$surf <- stoi$process%in%pros$name[pros$surf]
+    stoi$surf <- stoi$process %in% pros$name[pros$surf]
     funs$surf <-  sapply(funs$name,function(x)any(grepl(paste0("\\<",
                                                                x,"\\>"),
                                                         pros$expression) & pros$surf))
   } else {
     pros$surf <- FALSE
     vars$surf <- FALSE
+    vars$surfvar <- FALSE
     stoi$surf <- FALSE
     funs$surf <- FALSE
   }
   ## write switches for bottom processes
   if(any(!is.na(pros$bot))){
     pros$bot[is.na(pros$bot)] <- FALSE
-    vars$bot <- vars$name%in%stoi$variable[stoi$process%in%pros$name[pros$bot]]
-    stoi$bot <- stoi$process%in%pros$name[pros$bot]
+    if(length(vars$bot)>0){
+      vars$botvar <- vars$bot
+      vars$botvar[is.na(vars$bot)] <- FALSE
+    } else {
+      vars$botvar <- FALSE
+    }
+    vars$bot <- vars$name %in% stoi$variable[stoi$process %in% pros$name[pros$bot]]
+    stoi$bot <- stoi$process %in% pros$name[pros$bot]
     funs$bot <-  sapply(funs$name,function(x)any(grepl(paste0("\\<",
                                                                x,"\\>"),
                                                         pros$expression) & pros$bot))
   } else {
     pros$bot <- FALSE
     vars$bot <- FALSE
+    vars$botvar <- FALSE
     stoi$bot <- FALSE
     funs$bot <- FALSE
   }
@@ -110,13 +124,30 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   funs$pela <-  sapply(funs$name,function(x)any(grepl(paste0("\\<",
                                                             x,"\\>"),
                                                      pros$expression) & pros$pela))
+  vars$pelavar <- !(vars$botvar | vars$surfvar)
 
-  ## remove "time" argument from dependency functions
-  for (i in 1:sum(!is.na(funs$dependency))) {
-    pros$expression <- gsub(paste0(funs$name[!is.na(funs$dependency)][i],"\\(\\s*time\\s*\\)"),
-                            funs$name[!is.na(funs$dependency)][i],pros$expression)
+  if(any(!is.na(funs$dependency))){
+    ## remove "time" argument from dependency functions
+    for (i in 1:sum(!is.na(funs$dependency))) {
+      pros$expression <- gsub(paste0(funs$name[!is.na(funs$dependency)][i],"\\(\\s*time\\s*\\)"),
+                              funs$name[!is.na(funs$dependency)][i],pros$expression)
+    }
+    ## set propper "_GET_" argument for dependencys
+    funs$get_dep <- "_GET_(self%id_"
+    funs$dep_id <- "type_dependency_id"
+    funs$get_dep[is.na(funs$dependency)] <- NA
+    funs$dep_id[is.na(funs$dependency)] <- NA
+    for (i in funs$dependency[!is.na(funs$dependency)]) {
+    if(std_names_FABM$domain[std_names_FABM$Variable %in% i] == "horiz"){
+      funs$get_dep[funs$dependency %in% i] <- "_GET_HORIZONTAL_(self%id_"
+      funs$dep_id[funs$dependency %in% i] <- "type_horizontal_dependency_id"
+      }
+    if(std_names_FABM$domain[std_names_FABM$Variable %in% i] == "global"){
+      funs$get_dep[funs$dependency %in% i] <- "_GET_GLOBAL_(self%id_"
+      funs$dep_id[funs$dependency %in% i] <- "type_global_dependency_id"
+      }
+    }
   }
-
 
   ##------------- start code writing -------------------------------------------------
   code <- paste0('#include "fabm_driver.h"\n','module tuddhyb_rodeo\n',
@@ -124,7 +155,20 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
                  '\ttype, extends(type_base_model), public :: type_tuddhyb_rodeo\n',
                   collapse = "\n")
   ## declare state variables
-  code <- code_add(code,paste0("\t\ttype (type_state_variable_id) :: id_",vars$name))
+  code <- code_add(code,paste0("\t\ttype (type_state_variable_id) :: id_",
+                               vars$name[vars$pelavar]))
+  ## declare surface state variables
+  if(any(vars$surfvar)){
+    code <- code_add(code,"\n")
+    code <- code_add(code,paste0("\t\ttype (type_surface_state_variable_id) :: id_",
+                                 vars$name[vars$surfvar]))
+  }
+  ## declare bottom state variables
+  if(any(vars$botvar)){
+    code <- code_add(code,"\n")
+    code <- code_add(code,paste0("\t\ttype (type_bottom_state_variable_id) :: id_",
+                                 vars$name[vars$botvar]))
+  }
   # declare diagnostics if wanted
   if(diags){
     code <- code_add(code,"\n")
@@ -149,8 +193,9 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   }
   ## if there are any dependencies to state variables from the physical model add them
   if(any(!is.na(funs$dependency))){
-    code <- code_add(code,paste0("\t\ttype (type_dependency_id) :: id_",
-                                 funs$name[!is.na(funs$dependency)]))
+
+    code <- code_add(code,paste0("\t\ttype (",funs$dep_id[!is.na(funs$dependency)],
+                                 ") :: id_",funs$name[!is.na(funs$dependency)]))
     code <- code_add(code,"\n")
   }
   ## declare parameters
@@ -268,7 +313,8 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     }
     ## get dependencie values
     if(any(!is.na(funs$dependency)&funs$sedi)){
-      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",
+      ## check type of dependency
+      code <- code_add(code,paste0("\t\t\t",funs$get_dep[!is.na(funs$dependency)&funs$sedi],
                                    funs$name[!is.na(funs$dependency)&funs$sedi],", ",
                                    funs$name[!is.na(funs$dependency)&funs$sedi],")"))
       code <- code_add(code,"\n")
@@ -287,11 +333,12 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     # give rates of changes for the state variables
     rates <- paste0("\t\t\t_SET_VERTICAL_MOVEMENT_(self%id_",tot_rates$Group.1,", ",
                     tot_rates$x,
-                    ")\n")
+                    ")")
     ## change names of parameters to self%<name>
     rates <- add_self(rates,pars)
     ## add to code
     code <- code_add(code,rates)
+    code <- code_add(code,"\n")
     code <- code_add(code,paste0("\t\t_LOOP_END_\n\n",
                                  "\tend subroutine get_vertical_movement\n\n"))
   }
@@ -319,7 +366,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     code <- code_add(code,"\n")
     # get dependencie values
     if(any(!is.na(funs$dependency)&funs$pela)){
-      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",
+      code <- code_add(code,paste0("\t\t\t",funs$get_dep[!is.na(funs$dependency)&funs$pela],
                                    funs$name[!is.na(funs$dependency)&funs$pela],", ",
                             funs$name[!is.na(funs$dependency)&funs$pela],")"))
       code <- code_add(code,"\n")
@@ -365,12 +412,19 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     code <- code_add(code,"\n\t\t_HORIZONTAL_LOOP_BEGIN_\n")
 
     ## get variable values
-    code <- code_add(code,paste0("\t\t\t_GET_(self%id_",vars$name[vars$surf],",",
-                                 vars$name[vars$surf],")"))
+    code <- code_add(code,paste0("\t\t\t_GET_(self%id_",vars$name[vars$surf & vars$pelavar],",",
+                                 vars$name[vars$surf & vars$pelavar],")"))
     code <- code_add(code,"\n")
+
+    if(any(vars$surfvar)){
+      code <- code_add(code,paste0("\t\t\t_GET_HORIZONTAL_(self%id_",vars$name[vars$surfvar],",",
+                                   vars$name[vars$surfvar],")"))
+      code <- code_add(code,"\n")
+    }
+
     ## get dependency from physical host model
     if(any(!is.na(funs$dependency)&funs$surf)){
-      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",
+      code <- code_add(code,paste0("\t\t\t",funs$get_dep[!is.na(funs$dependency)&funs$surf],
                                    funs$name[!is.na(funs$dependency)&funs$surf],", ",
                                   funs$name[!is.na(funs$dependency)&funs$surf],")"))
       code <- code_add(code,"\n")
@@ -384,9 +438,13 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     tot_rates <-  aggregate(list(x=paste0(stoi$process[stoi$surf],
                                           " * (",stoi$expression[stoi$surf],")")),
                             by=list(stoi$variable[stoi$surf]),paste,collapse=" + ")
-
+    # check if state variables are pelagial or horizontal
+    tot_rates$pela <- sapply(tot_rates$Group.1, function(x){vars$pela[vars$name==x]})
+    tot_rates$surf <- sapply(tot_rates$Group.1, function(x){vars$surfvar[vars$name==x]})
+    tot_rates$set <- "_SET_SURFACE_EXCHANGE_(self%id_"
+    tot_rates$set[tot_rates$surf] <- "_SET_SURFACE_ODE_(self%id_"
     # give rates of changes for the state variables
-    rates <- paste0("\t\t\t_SET_SURFACE_EXCHANGE_(self%id_",tot_rates$Group.1,", ",
+    rates <- paste0("\t\t\t",tot_rates$set,tot_rates$Group.1,", ",
                     tot_rates$x,
                     ")")
     ## change names of parameters to self%<name>
@@ -418,12 +476,19 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     code <- code_add(code,"\n\t\t_HORIZONTAL_LOOP_BEGIN_\n")
 
     ## get variable values
-    code <- code_add(code,paste0("\t\t\t_GET_(self%id_",vars$name[vars$bot],",",
-                                 vars$name[vars$bot],")"))
+    code <- code_add(code,paste0("\t\t\t_GET_(self%id_",vars$name[vars$bot & vars$pelavar],",",
+                                 vars$name[vars$bot & vars$pelavar],")"))
     code <- code_add(code,"\n")
+
+    if(any(vars$botvar)){
+      code <- code_add(code,paste0("\t\t\t_GET_HORIZONTAL_(self%id_",vars$name[vars$botvar],",",
+                                   vars$name[vars$botvar],")"))
+      code <- code_add(code,"\n")
+    }
+
     ## get dependency from physical host model
     if(any(!is.na(funs$dependency)&funs$bot)){
-      code <- code_add(code,paste0("\t\t\t_GET_(self%id_",
+      code <- code_add(code,paste0("\t\t\t",funs$get_dep[!is.na(funs$dependency)&funs$bot],
                                    funs$name[!is.na(funs$dependency)&funs$bot],", ",
                                    funs$name[!is.na(funs$dependency)&funs$bot],")"))
       code <- code_add(code,"\n")
@@ -437,9 +502,14 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     tot_rates <-  aggregate(list(x=paste0(stoi$process[stoi$bot],
                                           " * (",stoi$expression[stoi$bot],")")),
                             by=list(stoi$variable[stoi$bot]),paste,collapse=" + ")
+    # check if state variables are pelagial or horizontal
+    tot_rates$pela <- sapply(tot_rates$Group.1, function(x){vars$pela[vars$name==x]})
+    tot_rates$bot <- sapply(tot_rates$Group.1, function(x){vars$botvar[vars$name==x]})
+    tot_rates$set <- "_SET_BOTTOM_EXCHANGE_(self%id_"
+    tot_rates$set[tot_rates$bot] <- "_SET_BOTTOM_ODE_(self%id_"
 
     # give rates of changes for the state variables
-    rates <- paste0("\t\t\t_SET_BOTTOM_EXCHANGE_(self%id_",tot_rates$Group.1,", ",
+    rates <- paste0("\t\t\t",tot_rates$set,tot_rates$Group.1,", ",
                     tot_rates$x,
                     ")")
     ## change names of parameters to self%<name>
