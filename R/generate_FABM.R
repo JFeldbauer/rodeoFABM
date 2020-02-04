@@ -49,7 +49,9 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
            "See FABM wiki: ",
            "https://github.com/fabm-model/fabm/wiki/List-of-standard-variables"))
     }
-  }
+  } else {
+    funs$dependency <- NA
+    }
 
   ## check if units are in per second
   chk_units(pars,"parameter")
@@ -148,6 +150,9 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
       }
     }
   }
+
+  ## in order to avoid trouble later: if funs is empty add FALSE to arguments
+  funs <- lapply(funs, function(x){if(length(x)==0){x <- FALSE} else {x <- x}})
 
   ##------------- start code writing -------------------------------------------------
   code <- paste0('#include "fabm_driver.h"\n','module tuddhyb_rodeo\n',
@@ -312,7 +317,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
       code <- code_add(code,"\n")
     }
     ## get dependencie values
-    if(any(!is.na(funs$dependency)&funs$sedi)){
+    if(any(!is.na(funs$dependency) & funs$sedi)){
       ## check type of dependency
       code <- code_add(code,paste0("\t\t\t",funs$get_dep[!is.na(funs$dependency)&funs$sedi],
                                    funs$name[!is.na(funs$dependency)&funs$sedi],", ",
