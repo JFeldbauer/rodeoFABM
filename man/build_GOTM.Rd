@@ -23,7 +23,7 @@ library(readODS)
 library(rodeoFABM)
 
 # copy example ods file
-example_model <- system.file("extdata//example", package= 'rodeoFABM')
+example_model <- system.file("extdata/simple_model.ods", package= 'rodeoFABM')
 dir.create('example') # Create example folder
 file.copy(from = example_model, to = 'example',recursive = TRUE)
 setwd('example') # Change working directory to example folder
@@ -39,8 +39,8 @@ stoi <- read_ods(odf_file,5)
 # generate fabm code
 gen_fabm_code(vars,pars,funs,pros,stoi,"simple_model.f90",diags = TRUE)
 # build GOTM
-build_GOTM(build_dir = "../build/",fabm_file = f90_file,
-           src_dir = "../gotm/extern/fabm/src/models/tuddhyb/rodeo/")
+build_GOTM(build_dir = "../build",fabm_file = "simple_model.f90",
+           src_dir = "../gotm/extern/fabm/src/models/tuddhyb/rodeo")
 }
 
 }

@@ -30,8 +30,8 @@
 #' # generate fabm code
 #' gen_fabm_code(vars,pars,funs,pros,stoi,"simple_model.f90",diags = TRUE)
 #' # build GOTM
-#' build_GOTM(build_dir = "../build/",fabm_file = f90_file,
-#'            src_dir = "../gotm/extern/fabm/src/models/tuddhyb/rodeo/")
+#' build_GOTM(build_dir = "../build",fabm_file = "simple_model.f90",
+#'            src_dir = "../gotm/extern/fabm/src/models/tuddhyb/rodeo")
 #' }
 #'
 build_GOTM <- function(build_dir,src_dir,fabm_file){
@@ -73,8 +73,10 @@ build_GOTM <- function(build_dir,src_dir,fabm_file){
 #' @author Johannes Feldbauer
 #' @export
 #' @examples
-#' \dontrun{}
-#'
+#' \dontrun{
+#' clone_GOTM(build_dir = "build",src_dir = "gotm")
+#' }
+
 clone_GOTM <- function(build_dir = "build",src_dir = "gotm"){
 
 

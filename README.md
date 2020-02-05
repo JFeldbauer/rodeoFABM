@@ -11,7 +11,19 @@ devtools::install_github("JFeldbauer/rodeoFABM")
 
 ## using FABMrodeo
 
-### generate FABM code
+### clone GOTM-FABM source code
+
+You can clone and build the lake branche of GOTM-FABM using the function `clone_GOTM()`:
+
+```r
+library(rodeoFABM)
+# clone github repo
+clone_GOTM(build_dir = "build",src_dir = "gotm")
+```
+after you generated FABM code you can compile the model
+
+
+### generate FABM code and compile GOTM-FABM
 
 to generate FABM code from data.frames (e.g. storred in a Libre Office spread sheet) use:
 
@@ -36,46 +48,8 @@ stoi <- read_ods(odf_file,5)
 # generate fabm code
 gen_fabm_code(vars,pars,funs,pros,stoi,"simple_model.f90",diags = TRUE)
 
-```
-### Compile the physical host model and FABM
+# build GOTM
+build_GOTM(build_dir = "../build",fabm_file = "simple_model.f90",
+           src_dir = "../gotm/extern/fabm/src/models/tuddhyb/rodeo")
 
-at first you need to create a new institut and make FABM aware of your model: see [FABM github wiki](https://github.com/fabm-model/fabm/wiki/Developing-a-new-biogeochemical-model#create-an-institute-directory-for-your-model)
-
-then you need move the file into the institut directory of FABM and compile your physical host model together with FABM
-
-#### GOTM compilation in Linux
-
-clone github repo
-```sh
-git clone --recursive https://github.com/gotm-model/code.git gotm
 ```
-go into the source dirwctory
-```sh
-cd gotm
-```
-switch to lake branch
-```sh
-git checkout origin/lake
-```
-fetch submodules
-```sh
-git submodule update --init --recursive
-```
-create and switch into build folder
-```sh
-cd .. && mkdir build && cd build
-```
-build make files using cmake with correct flags for FABM and STIM
-```sh
-cmake ../gotm -DGOTM_USE_FABM=on -DGOTM_USE_STIM=on
-```
-build executable
-```sh
-make
-```
- once you have compiled GOTM and want to update your FABM model you just need to store your model.f90 (or whatever you call it) text file in `gotm/extern/fabm/src/models/your_institut_folder` and run `make` in the build folder again.
-
-
-#### GOTM compilation in Windows
-
-Compilation instructions for GOTM for Windows are available [here](https://gotm.net/software/windows/). You also need to switch to the lake branch
