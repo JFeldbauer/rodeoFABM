@@ -14,7 +14,7 @@
 #' library(rodeoFABM)
 #'
 #' # copy example ods file
-#' example_model <- system.file("extdata//", package= 'rodeoFABM')
+#' example_model <- system.file("extdata/simple_model.ods", package= 'rodeoFABM')
 #' dir.create('example') # Create example folder
 #' file.copy(from = example_model, to = 'example',recursive = TRUE)
 #' setwd('example') # Change working directory to example folder
@@ -63,3 +63,60 @@ build_GOTM <- function(build_dir,src_dir,fabm_file){
 }
 
 
+#' Function to clone GOTM-FABM from github
+#'
+#' This function clones GOTM-FABM from the GOTM github page and prepares comiplation using cmake.
+#' Requires cmake. Builds the lake branche of GOTM
+#' @param build_dir Directory to build GOTM-FABM in.
+#' @param src_dir Directory to save the source code in.
+#' @keywords FABM, GOTM, compile
+#' @author Johannes Feldbauer
+#' @export
+#' @examples
+#' \dontrun{}
+#'
+clone_GOTM <- function(build_dir = "build",src_dir = "gotm"){
+
+
+  # Set original working directory
+  oldwd <- getwd()
+
+  # this way if the function exits for any reason, success or failure, wd are reset:
+  on.exit({
+    setwd(oldwd)
+  })
+
+  # clone GOTM-FABM to source directory
+  if(!dir.exists(src_dir)){
+    dir.create(src_dir)
+  }
+
+  system(paste0("git clone --recursive https://github.com/gotm-model/code.git ",src_dir))
+  setwd(src_dir)
+  # switch to lake branch
+  system("git checkout origin/lake")
+  # fetch submodules
+  system("git submodule update --init --recursive")
+
+  setwd(oldwd)
+
+  # create and switch into build folder
+  if(!dir.exists(build_dir)){
+    dir.create(build_dir)
+  }
+  setwd(build_dir)
+
+  # build make files using cmake with correct flags for FABM and STIM
+  system("cmake ../gotm -DGOTM_USE_FABM=on -DGOTM_USE_STIM=on")
+
+  setwd(oldwd)
+  # copy FABM file to make FABM aware of rodeoFABM model
+  cm_file <- system.file("extdata/FABM_files/CMakeLists.txt", package= 'rodeoFABM')
+  file.copy(from = cm_file, to = paste0(src_dir,"/extern/fabm/src/"),
+            recursive = TRUE,overwrite = TRUE)
+  rodeo_files <- system.file("extdata/FABM_files/models/tuddhyb", package= 'rodeoFABM')
+  file.copy(from = cm_file, to = paste0(src_dir,"/extern/fabm/src/models"),
+            recursive = TRUE,overwrite = TRUE)
+  cat("finished \n")
+
+}
