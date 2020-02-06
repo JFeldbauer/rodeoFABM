@@ -1,5 +1,7 @@
 # rodeoFABM
 tool for creating fortran code for a FABM biogeochemical model from data.frames. Similar to the [rodeo](https://github.com/dkneis/rodeo) R-package it uses the well known standard notation based on the [stoichiometry matrix](https://en.wikipedia.org/wiki/Petersen_matrix) to describe the ODEs.
+## dependencies
+In order to run rodeoFABM you need a working, (more or less) up to date, installation of: cmake, make, the gnu compilers, and git
 
 ## installation
 you can install `rodeoFABM` from github using:
@@ -18,7 +20,7 @@ You can clone and build the lake branche of GOTM-FABM using the function `clone_
 ```r
 library(rodeoFABM)
 # clone github repo
-clone_GOTM(build_dir = "build",src_dir = "gotm")
+clone_GOTM(build_dir = "build", src_dir = "gotm")
 ```
 after you generated FABM code you can compile the model
 
@@ -32,7 +34,7 @@ library(readODS)
 library(rodeoFABM)
 
 # copy example ods file
-example_model <- system.file("extdata//", package= 'rodeoFABM')
+example_model <- system.file("extdata/simple_model.ods", package= 'rodeoFABM')
 dir.create('example') # Create example folder
 file.copy(from = example_model, to = 'example',recursive = TRUE)
 setwd('example') # Change working directory to example folder
