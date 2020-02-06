@@ -37,7 +37,7 @@
 build_GOTM <- function(build_dir,src_dir,fabm_file){
 
   # name of the fortran file within the FABM directory
-  src_file = "rodeo.f90"
+  src_file = "rodeo.F90"
 
   # Set original working directory
   oldwd <- getwd()
@@ -49,7 +49,7 @@ build_GOTM <- function(build_dir,src_dir,fabm_file){
 
   # copy FABM file to source directory
   cat("copying file ",fabm_file," to ",src_dir,"\n")
-  file.copy(fabm_file,paste0(src_dir,"/",src_file),overwrite = TRUE)
+  file.copy(fabm_file,file.path(src_dir,src_file),overwrite = TRUE)
 
   # complie
   setwd(build_dir)
@@ -57,7 +57,7 @@ build_GOTM <- function(build_dir,src_dir,fabm_file){
   system2("make")
 
   # copy new gotm executable to original directory
-  file.copy("gotm",paste0(oldwd,"/gotm"),overwrite = TRUE)
+  file.copy("gotm",file.path(oldwd,"gotm"),overwrite = TRUE)
   cat("finished \n")
 
 }
@@ -109,15 +109,16 @@ clone_GOTM <- function(build_dir = "build",src_dir = "gotm"){
   setwd(build_dir)
 
   # build make files using cmake with correct flags for FABM and STIM
-  system("cmake ../gotm -DGOTM_USE_FABM=on -DGOTM_USE_STIM=on")
+  system(paste0("cmake ",file.path("..",src_dir)," -DGOTM_USE_FABM=on -DGOTM_USE_STIM=on"))
 
   setwd(oldwd)
   # copy FABM file to make FABM aware of rodeoFABM model
-  cm_file <- system.file("extdata/FABM_files/CMakeLists.txt", package= 'rodeoFABM')
-  file.copy(from = cm_file, to = paste0(src_dir,"/extern/fabm/src/"),
+  cm_file <- system.file(file.path("extdata","FABM_files","CMakeLists.txt"), package= 'rodeoFABM')
+  file.copy(from = cm_file, to = file.path(src_dir,"extern","fabm","src"),
             recursive = TRUE,overwrite = TRUE)
-  rodeo_files <- system.file("extdata/FABM_files/models/tuddhyb", package= 'rodeoFABM')
-  file.copy(from = rodeo_files, to = paste0(src_dir,"/extern/fabm/src/models"),
+  rodeo_files <- system.file(file.path("extdata","FABM_files","models","tuddhyb"),
+                             package= 'rodeoFABM')
+  file.copy(from = rodeo_files, to = file.path(src_dir,"extern","fabm","src","models"),
             recursive = TRUE,overwrite = TRUE)
   cat("finished \n")
 
