@@ -117,7 +117,7 @@ clone_GOTM <- function(build_dir = "build",src_dir = "gotm"){
   file.copy(from = cm_file, to = paste0(src_dir,"/extern/fabm/src/"),
             recursive = TRUE,overwrite = TRUE)
   rodeo_files <- system.file("extdata/FABM_files/models/tuddhyb", package= 'rodeoFABM')
-  file.copy(from = cm_file, to = paste0(src_dir,"/extern/fabm/src/models"),
+  file.copy(from = rodeo_files, to = paste0(src_dir,"/extern/fabm/src/models"),
             recursive = TRUE,overwrite = TRUE)
   cat("finished \n")
 
