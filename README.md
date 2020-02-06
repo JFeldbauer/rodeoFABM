@@ -1,5 +1,7 @@
 # rodeoFABM
 tool for creating fortran code for a FABM biogeochemical model from data.frames. Similar to the [rodeo](https://github.com/dkneis/rodeo) R-package it uses the well known standard notation based on the [stoichiometry matrix](https://en.wikipedia.org/wiki/Petersen_matrix) to describe the ODEs.
+## dependencies
+In order to run rodeoFABM you need a working, (more or less) up to date, installation of: cmake, make, the gnu compilers, and git
 
 ## installation
 you can install `rodeoFABM` from github using:
