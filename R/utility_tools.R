@@ -69,6 +69,8 @@ build_GOTM <- function(build_dir,src_dir,fabm_file){
 #' Requires cmake. Builds the lake branche of GOTM
 #' @param build_dir Directory to build GOTM-FABM in.
 #' @param src_dir Directory to save the source code in.
+#' @param newest_version Boolean. Should the newest version of GOTM be used. Might break if there
+#'   are substantial changes in GOTM. Fallback uses the Version of November 2019.
 #' @keywords FABM, GOTM, compile
 #' @author Johannes Feldbauer
 #' @export
@@ -77,7 +79,7 @@ build_GOTM <- function(build_dir,src_dir,fabm_file){
 #' clone_GOTM(build_dir = "build",src_dir = "gotm")
 #' }
 
-clone_GOTM <- function(build_dir = "build",src_dir = "gotm"){
+clone_GOTM <- function(build_dir = "build",src_dir = "gotm", newest_version = TRUE){
 
 
   # Set original working directory
@@ -95,8 +97,14 @@ clone_GOTM <- function(build_dir = "build",src_dir = "gotm"){
 
   system(paste0("git clone --recursive https://github.com/gotm-model/code.git ",src_dir))
   setwd(src_dir)
+
+  # go to specific version
+  if(!newest_version){
+    system("git reset --hard 33062b0fe30ffec546db9536c3ee6af263845307")
+  }
   # switch to lake branch
   system("git checkout origin/lake")
+
   # fetch submodules
   system("git submodule update --init --recursive")
 
@@ -106,12 +114,6 @@ clone_GOTM <- function(build_dir = "build",src_dir = "gotm"){
   if(!dir.exists(build_dir)){
     dir.create(build_dir)
   }
-  setwd(build_dir)
-
-  # build make files using cmake with correct flags for FABM and STIM
-  system(paste0("cmake ",file.path("..",src_dir)," -DGOTM_USE_FABM=on -DGOTM_USE_STIM=on"))
-
-  setwd(oldwd)
   # copy FABM file to make FABM aware of rodeoFABM model
   cm_file <- system.file(file.path("extdata","FABM_files","CMakeLists.txt"), package= 'rodeoFABM')
   file.copy(from = cm_file, to = file.path(src_dir,"extern","fabm","src"),
@@ -120,6 +122,14 @@ clone_GOTM <- function(build_dir = "build",src_dir = "gotm"){
                              package= 'rodeoFABM')
   file.copy(from = rodeo_files, to = file.path(src_dir,"extern","fabm","src","models"),
             recursive = TRUE,overwrite = TRUE)
+
+  setwd(build_dir)
+
+  # build make files using cmake with correct flags for FABM and STIM
+  system(paste0("cmake ",file.path("..",src_dir),
+                " -DGOTM_USE_FABM=on -DGOTM_USE_STIM=on -DFABM_INSTITUTES=tuddhyb"))
+
+  setwd(oldwd)
   cat("finished \n")
 
 }

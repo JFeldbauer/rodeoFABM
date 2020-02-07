@@ -4,12 +4,15 @@
 \alias{clone_GOTM}
 \title{Function to clone GOTM-FABM from github}
 \usage{
-clone_GOTM(build_dir = "build", src_dir = "gotm")
+clone_GOTM(build_dir = "build", src_dir = "gotm", newest_version = TRUE)
 }
 \arguments{
 \item{build_dir}{Directory to build GOTM-FABM in.}
 
 \item{src_dir}{Directory to save the source code in.}
+
+\item{newest_version}{Boolean. Should the newest version of GOTM be used. Might break if there
+are substantial changes in GOTM. Fallback uses the Version of November 2019.}
 }
 \description{
 This function clones GOTM-FABM from the GOTM github page and prepares comiplation using cmake.
