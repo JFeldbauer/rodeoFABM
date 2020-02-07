@@ -2,4 +2,5 @@
 
 export(build_GOTM)
 export(clone_GOTM)
+export(document_model)
 export(gen_fabm_code)

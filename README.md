@@ -29,7 +29,6 @@ to generate FABM code from data.frames (e.g. storred in a Libre Office spread sh
 
 ```r
 library(readODS)
-library(rodeoFABM)
 
 # copy example ods file
 example_model <- system.file("extdata/simple_model.ods", package= 'rodeoFABM')
