@@ -25,13 +25,13 @@ vignette: >
 -->
 
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
+```{r include=FALSE}
 # Store output format for later use
 options(vignetteDocumentFormat= rmarkdown::all_output_formats("rodeoFABMVignette.Rmd"))
 ```
 
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
+```{r include=FALSE}
 options(width=120) 
 library(xtable)
 options(xtable.caption.placement = 'top',
@@ -80,7 +80,7 @@ install_github("JFeldbauer/rodeoFABM")
 
 A simple example that is extended along the way
 
-## first example (how it works)
+## first example (how it works) {#first_exmpl}
 
 To demonstrate the workflow we will use a very simple model that is provided in the package. The files are contained in the package and can be loaded using:
 
@@ -160,8 +160,8 @@ plot_vari("output.nc", "rodeo_C_O2")
 
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
-file.remove(c("gotm", "simple_model.f90", "simple_model.ods", "meteo_file.dat",
-              "hypsograph.dat", "output.nc", "restart.nc", "gotm.yaml", "fabm.yaml"))
+file.remove(c("gotm", "simple_model.f90", "simple_model.ods", "output.nc",
+              "restart.nc", "gotm.yaml", "fabm.yaml"))
 
 ```
 
@@ -171,11 +171,34 @@ These are the essential steps used. In the next section we will go into the deta
 
 In order to demonstrate the necessary steps we will create a very simple phytoplankton-nutrients model and step by step add more processes.
 
+copy all necessary files to run GOTM. We use the same meteo and hypso files as in the [first example](#first_exmpl)
+
+```{r message=FALSE, warning=FALSE, results="hide"}
+# GOTM controll fille
+yaml <- system.file("extdata/examples/gotm.yaml",
+                   package = "rodeoFABM")
+file.copy(from = yaml, to = ".", recursive = TRUE)
+# inflow hydrological data
+infl <- system.file("extdata/examples/inflow_m.dat",
+                   package = "rodeoFABM")
+file.copy(from = infl, to = ".", recursive = TRUE)
+# inflow nutient data
+nut <- system.file("extdata/examples/inflow_wq_m.dat",
+                   package = "rodeoFABM")
+file.copy(from = nut, to = ".", recursive = TRUE)
+# outflow data
+out <- system.file("extdata/examples/outflow.dat",
+                   package = "rodeoFABM")
+file.copy(from = out, to = ".", recursive = TRUE)
+```
+
+
+
 ### Inflow 
 
 Add Substrat if comming in from the inflow
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE, results="hide"}
 # copy the spread sheet
 ods <- system.file("extdata/examples/simple_alg.ods",
                    package = "rodeoFABM")
@@ -192,7 +215,7 @@ stoi <- read_ods("simple_alg.ods", sheet = "stoi")
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_1.f90")
 
 # build GOTM with the model
-build_GOTM(build_dir = "../build/", src_dir = "../gotm/extern/fabm/src/models/tuddhyb/rodeo/",
+build_GOTM(build_dir = "build", src_dir = "gotm_src/extern/fabm/src/models/tuddhyb/rodeo/",
            fabm_file = "model_1.f90")
 
 # run the model
@@ -209,7 +232,7 @@ plot_vari("output.nc", "rodeo_HPO4")
 
 PAR dependency of growth
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE, results="hide"}
 ods <- system.file("extdata/examples/simple_alg_par.ods",
                    package = "rodeoFABM")
 file.copy(from = ods, to = ".", recursive = TRUE)
@@ -225,7 +248,7 @@ stoi <- read_ods("simple_alg_par.ods", sheet = "stoi")
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_2.f90")
 
 # build GOTM with the model
-build_GOTM(build_dir = "../build/", src_dir = "../gotm/extern/fabm/src/models/tuddhyb/rodeo/",
+build_GOTM(build_dir = "build", src_dir = "gotm_src/extern/fabm/src/models/tuddhyb/rodeo/",
            fabm_file = "model_2.f90")
 
 # run the model
@@ -248,7 +271,7 @@ long_heatmap(wide2long(net_growth, z))
 
 algae are settling
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE, results="hide"}
 ods <- system.file("extdata/examples/simple_alg_par_sed.ods",
                    package = "rodeoFABM")
 file.copy(from = ods, to = ".", recursive = TRUE)
@@ -264,7 +287,7 @@ stoi <- read_ods("simple_alg_par_sed.ods", sheet = "stoi")
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_3.f90")
 
 # build GOTM with the model
-build_GOTM(build_dir = "../build/", src_dir = "../gotm/extern/fabm/src/models/tuddhyb/rodeo/",
+build_GOTM(build_dir = "build", src_dir = "gotm_src/extern/fabm/src/models/tuddhyb/rodeo/",
            fabm_file = "model_3.f90")
 
 # run the model
@@ -288,7 +311,7 @@ long_heatmap(wide2long(net_growth, z))
 
 Add oxygen along with surface exchange and a constant oxygen consumption
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE, results="hide"}
 ods <- system.file("extdata/examples/simple_alg_O2.ods",
                    package = "rodeoFABM")
 file.copy(from = ods, to = ".", recursive = TRUE)
@@ -303,7 +326,7 @@ stoi <- read_ods("simple_alg_O2.ods", sheet = "stoi")
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_4.f90")
 
 # build GOTM with the model
-build_GOTM(build_dir = "../build/", src_dir = "../gotm/extern/fabm/src/models/tuddhyb/rodeo/",
+build_GOTM(build_dir = "build", src_dir = "gotm_src/extern/fabm/src/models/tuddhyb/rodeo/",
            fabm_file = "model_4.f90")
 
 # run the model
@@ -321,7 +344,7 @@ plot_vari("output.nc", "rodeo_O2")
 
 death of algae generates POM which sediments faster and can become SPOM and be mineralized at the sediment faster
 
-```{r eval=FALSE}
+```{r message=FALSE, warning=FALSE, results="hide"}
 ods <- system.file("extdata/examples/simple_alg_O2_POM.ods",
                    package = "rodeoFABM")
 file.copy(from = ods, to = ".", recursive = TRUE)
@@ -337,7 +360,7 @@ stoi <- read_ods("simple_alg_O2_POM.ods", sheet = "stoi")
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_5.f90")
 
 # build GOTM with the model
-build_GOTM(build_dir = "../build/", src_dir = "../gotm/extern/fabm/src/models/tuddhyb/rodeo/",
+build_GOTM(build_dir = "build", src_dir = "gotm_src/extern/fabm/src/models/tuddhyb/rodeo/",
            fabm_file = "model_5.f90")
 
 # run the model
@@ -375,11 +398,16 @@ if wanted `rodeoFABM` can automatically generate LaTeX documentation of the stat
 
 
 
-```{r, cache=FALSE, echo=FALSE}
+```{r cache=FALSE, include=FALSE}
 # Reset work folder
 knitr::opts_knit$set(root.dir=NULL)
 # delete files
 unlink(c("build","gotm_src"), recursive = TRUE)
+file.remove(c("gotm", "model_1.f90", "model_2.f90", "model_3.f90", "model_4.f90", 
+              "model_5.f90", "simple_alg.ods", "meteo_file.dat", "inflow_m.dat",
+              "outflow.dat", "inflow_wq_m.dat", "simple_alg_O2_POM.ods",
+              "simple_alg_O2.ods", "simple_alg_par.ods", "simple_alg_par.ods",
+              "hypsograph.dat", "output.nc", "restart.nc", "gotm.yaml", "fabm.yaml"))
 ```
 
 # References
