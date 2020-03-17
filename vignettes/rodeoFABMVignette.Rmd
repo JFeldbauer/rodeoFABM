@@ -177,7 +177,7 @@ Add Substrat if comming in from the inflow
 
 ```{r eval=FALSE}
 # copy the spread sheet
-ods <- system.file("vignettes/vignetteData/examples/simple_alg.ods",
+ods <- system.file("extdata/examples/simple_alg.ods",
                    package = "rodeoFABM")
 file.copy(from = ods, to = ".", recursive = TRUE)
 
@@ -210,7 +210,7 @@ plot_vari("output.nc", "rodeo_HPO4")
 PAR dependency of growth
 
 ```{r eval=FALSE}
-ods <- system.file("vignettes/vignetteData/examples/simple_alg_par.ods",
+ods <- system.file("extdata/examples/simple_alg_par.ods",
                    package = "rodeoFABM")
 file.copy(from = ods, to = ".", recursive = TRUE)
 
@@ -249,7 +249,7 @@ long_heatmap(wide2long(net_growth, z))
 algae are settling
 
 ```{r eval=FALSE}
-ods <- system.file("vignettes/vignetteData/examples/simple_alg_par_sed.ods",
+ods <- system.file("extdata/examples/simple_alg_par_sed.ods",
                    package = "rodeoFABM")
 file.copy(from = ods, to = ".", recursive = TRUE)
 
@@ -289,7 +289,7 @@ long_heatmap(wide2long(net_growth, z))
 Add oxygen along with surface exchange and a constant oxygen consumption
 
 ```{r eval=FALSE}
-ods <- system.file("vignettes/vignetteData/examples/simple_alg_O2.ods",
+ods <- system.file("extdata/examples/simple_alg_O2.ods",
                    package = "rodeoFABM")
 file.copy(from = ods, to = ".", recursive = TRUE)
 # read in first simple model
@@ -322,7 +322,7 @@ plot_vari("output.nc", "rodeo_O2")
 death of algae generates POM which sediments faster and can become SPOM and be mineralized at the sediment faster
 
 ```{r eval=FALSE}
-ods <- system.file("vignettes/vignetteData/examples/simple_alg_O2_POM.ods",
+ods <- system.file("extdata/examples/simple_alg_O2_POM.ods",
                    package = "rodeoFABM")
 file.copy(from = ods, to = ".", recursive = TRUE)
 
