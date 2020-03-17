@@ -17,15 +17,15 @@ grid:
    ddl: 0.0                             # bottom zooming [dimensionless; min=0.0; default=0.0]
    file:                                # file with custom grid [default=]
 temperature:                            # temperature profile used for initialization and optionally relaxation
-   method: 2 # method [0=off, 1=analytical, 2=from file; default=0]
+   method: 1 # method [0=off, 1=analytical, 2=from file; default=0]
    file: init_cond.dat # path to file with series of profiles [default=]
    column: 1 # index of column to read from [default=1]
    analytical:
       method: 1                         # type of analytical initial temperature profile [1=constant, 2=two layers, 3=from salinity and buoyancy frequency; default=1]
-      z_t1: 30.0                        # upper layer thickness [m; min=0.0; default=0.0]
-      t_1: 20.0                         # upper layer temperature [Celsius; min=0.0; max=40.0; default=0.0]
-      z_t2: 40.0                        # lower layer thickness [m; min=0.0; default=0.0]
-      t_2: 15.0                         # lower layer temperature [Celsius; min=0.0; max=40.0; default=0.0]
+      z_t1: 20.0                        # upper layer thickness [m; min=0.0; default=0.0]
+      t_1: 2.0                         # upper layer temperature [Celsius; min=0.0; max=40.0; default=0.0]
+      z_t2: 20.0                        # lower layer thickness [m; min=0.0; default=0.0]
+      t_2: 3.0                         # lower layer temperature [Celsius; min=0.0; max=40.0; default=0.0]
       obs_NN: 2.56000000E-04            # constant buoyancy frequency [s^-2; min=0.0; default=0.0]
    relax:                               # relax model temperature to observed/prescribed value
       tau: 1.00000000E+15               # time scale for interior layer [s; min=0.0; default=1.00000000E+15]

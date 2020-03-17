@@ -64,8 +64,6 @@ library(OceanView)
 # copy gotm control file and initital temperature
 yaml_file <- system.file("extdata/gotm.yaml", package= "rodeoFABM")
 file.copy(from = yaml_file, to = ".", recursive = TRUE)
-init_file <- system.file("extdata/init_cond.dat", package= "rodeoFABM")
-file.copy(from = init_file, to = ".", recursive = TRUE)
 
 # load forcing data
 data(meteo_file)
