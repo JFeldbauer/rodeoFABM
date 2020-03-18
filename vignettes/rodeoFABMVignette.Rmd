@@ -32,7 +32,8 @@ options(vignetteDocumentFormat= rmarkdown::all_output_formats("rodeoFABMVignette
 
 
 ```{r include=FALSE}
-options(width=120) 
+options(width=120)
+library(knitr)
 library(xtable)
 options(xtable.caption.placement = 'top',
         xtable.include.rownames = FALSE,
@@ -248,7 +249,7 @@ library(rodeo)
 vars_t <- vars
 vars_t$name <- paste0("$",vars_t$name, "$")
 vars_t$name <- gsub("_", "\\_", vars_t$name, fixed = TRUE)
-knitr::kable(vars_t, caption="Data set `vars`: Declaration of state variables.")
+kable(vars_t, caption="Data set `vars`: Declaration of state variables.")
 ```
 
 
@@ -260,7 +261,7 @@ library(rodeo)
 pars_t <- pars
 pars_t$name <- paste0("$",pars_t$name, "$")
 pars_t$name <- gsub("_", "\\_", pars_t$name, fixed = TRUE)
-knitr::kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
+kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
 ```
 
 External functions, or forcing data that needs to be obtained from the physical host model (e.g. water temperature) are defined in `funs`. As the first simpole model has no such things this is explaine in the later steps. As in this example the data frame is not needed it hast to be set to `NULL`.
@@ -276,7 +277,7 @@ pros_t$expression <- gsub("-", " - ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("/", " / ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("_", "\\_", pros_t$expression, fixed = TRUE)
 pros_t$expression <- paste0("$",pros_t$expression, "$")
-knitr::kable(pros_t, caption="Data set `pros`: Declaration of processes.")
+kable(pros_t, caption="Data set `pros`: Declaration of processes.")
 ```
 
 The phytoplankton have a simple linear growth term with a Monod like limitation for the limiting nutrient Phosphorus and a linear decay/death term.
@@ -293,13 +294,13 @@ stoi_t$expression <- gsub("_", "\\_", stoi_t$expression, fixed = TRUE)
 stoi_t$expression <- paste0("$",stoi_t$expression, "$")
 stoi_t$variable <- paste0("$",stoi_t$variable, "$")
 stoi_t$variable <- gsub("_", "\\_", stoi_t$variable, fixed = TRUE)
-knitr::kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in long format.")
+kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in long format.")
 ```
 
 
 The growth of phytoplankton is increasing its concentration $C$ and decreasing the nutrient $HPO4$ by the fraction of $a_P$, which is the Phosphorus conten of the phytoplankton. Decay/death is just decreasing phytoplankton concentration $C$.
 
-Having declared all five data frames we can now generate the fortran code using `gen_fabm_code()`. This will also perfome some automated checks e.g. if all used parameters and state variables are also declared, and will issue a warning if the used units are not using seconds for time. It will also create the *FABM* control file `fabm.yaml` and insert the default values for parameters and initial values (if declared). If the argument `diags` is set to `TRUE` the process rates are stored as diagnostic variables in the output netcdf file. 
+Having declared all five data frames we can now generate the fortran code using `gen_fabm_code()`. This will also perfome some automated checks e.g. if all used parameters and state variables are also declared, and will issue a warning if the used units are not using seconds for time. It will also create the *FABM* control file `fabm.yaml` and insert the default values for parameters and initial values (if declared). If the argument `diags` is set to TRUE the process rates are stored as diagnostic variables in the output netcdf file. 
 
 ```{r message=FALSE, warning=FALSE, results="hide"}
 # create the fabm code
@@ -351,7 +352,7 @@ library(rodeo)
 funs_t <- funs
 funs_t$name <- paste0("$",funs_t$name, "$")
 funs_t$name <- gsub("_", "\\_", funs_t$name, fixed = TRUE)
-knitr::kable(funs_t, caption="Data set `funs`: Declaration of model functions and dependencies from the host model.")
+kable(funs_t, caption="Data set `funs`: Declaration of model functions and dependencies from the host model.")
 ```
 
 The declared functions/dependencies can now be used in the process expression, same as parameters and state variables. We added a Monod Term for light limitation in the *growth* process:
@@ -365,7 +366,7 @@ pros_t$expression <- gsub("-", " - ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("/", " / ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("_", "\\_", pros_t$expression, fixed = TRUE)
 pros_t$expression <- paste0("$",pros_t$expression, "$")
-knitr::kable(pros_t, caption="Data set `pros`: Declaration of processes.")
+kable(pros_t, caption="Data set `pros`: Declaration of processes.")
 ```
 
 For this we need to declare the additional parameter for the half-saturation irradiation in the `pars` data frame:
@@ -375,7 +376,7 @@ library(rodeo)
 pars_t <- pars
 pars_t$name <- paste0("$",pars_t$name, "$")
 pars_t$name <- gsub("_", "\\_", pars_t$name, fixed = TRUE)
-knitr::kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
+kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
 ```
 
 Now we can generate the fortran code, compile *GOTM-FABM*, and run the adapted model.
@@ -440,7 +441,7 @@ pros_t$expression <- gsub("-", " - ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("/", " / ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("_", "\\_", pros_t$expression, fixed = TRUE)
 pros_t$expression <- paste0("$",pros_t$expression, "$")
-knitr::kable(pros_t, caption="Data set `pros`: Declaration of processes.")
+kable(pros_t, caption="Data set `pros`: Declaration of processes.")
 ```
 
 For this to work we need to declare the additional parameter for the sinking velocity:
@@ -450,7 +451,7 @@ library(rodeo)
 pars_t <- pars
 pars_t$name <- paste0("$",pars_t$name, "$")
 pars_t$name <- gsub("_", "\\_", pars_t$name, fixed = TRUE)
-knitr::kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
+kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
 ```
 
 
@@ -466,7 +467,7 @@ stoi_t$expression <- gsub("_", "\\_", stoi_t$expression, fixed = TRUE)
 stoi_t$expression <- paste0("$",stoi_t$expression, "$")
 stoi_t$variable <- paste0("$",stoi_t$variable, "$")
 stoi_t$variable <- gsub("_", "\\_", stoi_t$variable, fixed = TRUE)
-knitr::kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in long format.")
+kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in long format.")
 ```
 
 Now we can create the fortran source file, compile *GOTM-FABM*, run the model and plot some of the results:
@@ -518,42 +519,47 @@ library(rodeo)
 vars_t <- vars
 vars_t$name <- paste0("$",vars_t$name, "$")
 vars_t$name <- gsub("_", "\\_", vars_t$name, fixed = TRUE)
-knitr::kable(vars_t, caption="Data set `vars`: Declaration of state variables.")
+kable(vars_t, caption="Data set `vars`: Declaration of state variables.")
 ```
 
 
-If processes occure only at the surface or bottom interface we can declare this by setting a logical flag in additional columns in the `pros` data frame called *bot* and *surf*. We add two new processes *O2_exch*, and *O2_cons* and set the flag in the corresponding columns to `TRUE`:
+If processes occure only at the surface or bottom interface we can declare this by setting a logical flag in additional columns in the `pros` data frame called *bot* and *surf*. We add two new processes *O2_exch*, and *O2_cons* and set the flag in the corresponding columns to TRUE:
 
-```{r, echo=FALSE}
-library(rodeo)
+```{r echo=FALSE}
 pros_t <- pros
 pros_t$expression <- gsub("*", " \\cdot ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("+", " + ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("-", " - ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("/", " / ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("_", "\\_", pros_t$expression, fixed = TRUE)
+pros_t$name <- gsub("_", "\\_", pros_t$name, fixed = TRUE)
+pros_t$unit <- gsub("^", "\\^{}", pros_t$unit, fixed = TRUE)
+
 pros_t$expression <- paste0("$",pros_t$expression, "$")
-knitr::kable(pros_t, caption="Data set `pros`: Declaration of processes.")
+```
+```{r echo=FALSE, results = "asis"}
+print(xtable(pros_t, caption="Data set `pros`: Declaration of processes."), size="\\fontsize{4.5pt}{5pt}\\selectfont", type = "latex",table.placement = "!h",
+      sanitize.text.function=function(x){x})
 ```
 
-We need to declare the two additional parameter for the oxygen exchange velocity and the constant consumption in the sediment:
+We need to declare the additional parameter for the oxygen exchange velocity, the constant consumption in the sediment, and the half-saturation concentration of oxygen limiting the oxygen consumption in the sediment:
 
 ```{r, echo=FALSE}
 library(rodeo)
 pars_t <- pars
 pars_t$name <- paste0("$",pars_t$name, "$")
 pars_t$name <- gsub("_", "\\_", pars_t$name, fixed = TRUE)
-knitr::kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
+kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
 ```
 
-And we need to declare the two functions used $log$, and $exp$, as well as the external dependencies $p$ (the barometric pressure at the surface), and $Temp$ (water temperature) which are needed to calculate the oxygen saturation concentration:
+We need to declare the used functions $log$, and $exp$, as well as the external dependencies $p$ (the barometric pressure at the surface), and $Temp$ (water temperature) which are needed to calculate the oxygen saturation concentration:
 
 ```{r, echo=FALSE}
 library(rodeo)
 funs_t <- funs
 funs_t$name <- paste0("$",funs_t$name, "$")
 funs_t$name <- gsub("_", "\\_", funs_t$name, fixed = TRUE)
-knitr::kable(funs_t, caption="Data set `funs`: Declaration of model functions and dependencies from the host model.")
+kable(funs_t, caption="Data set `funs`: Declaration of model functions and dependencies from the host model.")
 ```
 
 After adding the new processes to the stoichiometry table:
@@ -568,7 +574,7 @@ stoi_t$expression <- gsub("_", "\\_", stoi_t$expression, fixed = TRUE)
 stoi_t$expression <- paste0("$",stoi_t$expression, "$")
 stoi_t$variable <- paste0("$",stoi_t$variable, "$")
 stoi_t$variable <- gsub("_", "\\_", stoi_t$variable, fixed = TRUE)
-knitr::kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in long format.")
+kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in long format.")
 ```
 
 We can generate the source code, compile *GOTM-FABM*, run the model, and plot some of the results:
@@ -591,9 +597,9 @@ plot_vari("output.nc", "rodeo_O2")
 ```
 
 
-### Sediment or Surface attached state variables
+### Sediment or surface attached state variables
 
-death of algae generates POM which sediments faster and can become SPOM and be mineralized at the sediment faster
+As mentioned before *FABM* recognizes three spatial domains: open water, surface, and sediment. Like Processes, also state variables can be attaced to one of these domaines (e.g. sedimented particulated organic matter). To demonstrate this feature we will include two mroe state variables in our model; particulated organic matter ($POM$) and sedimented particulated organic matter ($SPOM$). Again we first need to copy the spread sheet from the package:
 
 ```{r message=FALSE, warning=FALSE, results="hide"}
 ods <- system.file("extdata/examples/simple_alg_O2_POM.ods",
@@ -608,31 +614,37 @@ pros <- read_ods("simple_alg_O2_POM.ods", sheet = "pros")
 stoi <- read_ods("simple_alg_O2_POM.ods", sheet = "stoi")
 ```
 
-Add two new state variables `POM` and `SPOM`, declare `SPOM` as bottom bound state variable:
+Then we add the two new state variables $POM$ and $SPOM$. We declare $SPOM$ as bottom bound state variable by adding another column to the `vars` data frame called *bot* and set it to TRUE for all bottom bound state variables and to NA or FALSE for all others. Surface bound state variables can be declared in a column named *surf* in the same manner.
 
 ```{r, echo=FALSE}
 library(rodeo)
+
 vars_t <- vars
 vars_t$name <- paste0("$",vars_t$name, "$")
 vars_t$name <- gsub("_", "\\_", vars_t$name, fixed = TRUE)
-knitr::kable(vars_t, caption="Data set `vars`: Declaration of state variables.")
+kable(vars_t, caption="Data set `vars`: Declaration of state variables.")
 ```
 
-Add new process:
+The death of algae generates $POM$, which settles down, and sediments to the ground to become $SPOM$. Both $POM$ and $SPOM$ are mineralized, releasing $HPO4$ but the mineralization is faster in the sediment. We add the new sinking, sedimentation, and mineralization processes to the `pros` data frame:
 
-```{r, echo=FALSE}
-library(rodeo)
+```{r echo=FALSE}
 pros_t <- pros
 pros_t$expression <- gsub("*", " \\cdot ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("+", " + ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("-", " - ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("/", " / ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("_", "\\_", pros_t$expression, fixed = TRUE)
+pros_t$name <- gsub("_", "\\_", pros_t$name, fixed = TRUE)
+pros_t$unit <- gsub("^", "\\^{}", pros_t$unit, fixed = TRUE)
+
 pros_t$expression <- paste0("$",pros_t$expression, "$")
-knitr::kable(pros_t, caption="Data set `pros`: Declaration of processes.")
+```
+```{r echo=FALSE, results = "asis"}
+print(xtable(pros_t, caption="Data set `pros`: Declaration of processes."), size="\\fontsize{4.5pt}{5pt}\\selectfont", type = "latex",table.placement = "!h",
+      sanitize.text.function=function(x){x})
 ```
 
-Change Stoicheometry:
+Then we need to adapt the stoichiometry table:
 
 ```{r, echo=FALSE}
 library(rodeo)
@@ -644,11 +656,21 @@ stoi_t$expression <- gsub("_", "\\_", stoi_t$expression, fixed = TRUE)
 stoi_t$expression <- paste0("$",stoi_t$expression, "$")
 stoi_t$variable <- paste0("$",stoi_t$variable, "$")
 stoi_t$variable <- gsub("_", "\\_", stoi_t$variable, fixed = TRUE)
-knitr::kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in long format.")
+kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in long format.")
+```
+
+And declare the new parameters for the sinking velocity, the mineralization kinetic, and the half-saturation concentration limiting the mineralization: 
+
+```{r, echo=FALSE}
+library(rodeo)
+pars_t <- pars
+pars_t$name <- paste0("$",pars_t$name, "$")
+pars_t$name <- gsub("_", "\\_", pars_t$name, fixed = TRUE)
+kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
 ```
 
 
-Create fortran source code, compile *GOTM-FABM*, run the model, and plot results:
+Now we can create fortran source code, compile *GOTM-FABM*, run the model, and plot the results:
 
 ```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, dpi = 72}
 # create the fabm code
@@ -672,15 +694,15 @@ plot_vari("output.nc", "rodeo_SPOM")
 
 ## Additional features
 
-### Additional state variable argumenhts
+### Additional state variable arguments
 
-There are a few additional arguments for state variables that can be defined in FABM. In order to use them a new column in the state variable data frame needs to be added with exactly the name.
+There are a few additional arguments for state variables that can be defined in *FABM*. In order to use them a new column in the state variable data frame needs to be added with exactly the name.
 
-- minimum: minnimum allowed value for the state variable
-- maximum: maximum allowed value for the state variable
-- specific_light_extinction: specific light extinction coefficient of this variable
-- no_precipitation_dilution: the variable is not diluted by precipitation
-- no_river_dilution: the variable is not diluted by river inflows
+- *minimum*: minnimum allowed value for the state variable
+- *maximum*: maximum allowed value for the state variable
+- *specific_light_extinction*: specific light extinction coefficient of this variable
+- *no_precipitation_dilution*: the variable is not diluted by precipitation
+- *no_river_dilution*: the variable is not diluted by river inflows
 
 ### Profile initial values for the state variables
 
@@ -696,7 +718,7 @@ if wanted `rodeoFABM` can automatically generate LaTeX documentation of the stat
 
 ```{r cache=FALSE, include=FALSE}
 # Reset work folder
-knitr::opts_knit$set(root.dir=NULL)
+opts_knit$set(root.dir=NULL)
 # delete files
 unlink(c("build","gotm_src"), recursive = TRUE)
 file.remove(c("gotm", "model_1.f90", "model_2.f90", "model_3.f90", "model_4.f90", 
