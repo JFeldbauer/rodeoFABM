@@ -80,7 +80,7 @@ install_github("JFeldbauer/rodeoFABM")
 
 A simple example that is extended along the way
 
-## first example (how it works) {#first_exmpl}
+## First example (how it works) {#first_exmpl}
 
 To demonstrate the workflow we will use a very simple model that is provided in the package. The files are contained in the package and can be loaded using:
 
@@ -167,7 +167,7 @@ file.remove(c("gotm", "simple_model.f90", "simple_model.ods", "output.nc",
 
 These are the essential steps used. In the next section we will go into the details of building a model using the `rodeoFABM` package step by step.
 
-## create own model
+## Create a model step by step
 
 In order to demonstrate the necessary steps and functionality we will create a very simple phytoplankton-nutrients model and step by step add more processes.
 
@@ -233,7 +233,7 @@ ods <- system.file("extdata/examples/simple_alg.ods",
                    package = "rodeoFABM")
 file.copy(from = ods, to = ".", recursive = TRUE)
 
-# read in first simple model
+# declare data frames for vars, pars, funs, pros, and stoi
 vars <- read_ods("simple_alg.ods", sheet = "vars")
 pars <- read_ods("simple_alg.ods", sheet = "pars")
 funs <- NULL
@@ -297,16 +297,16 @@ knitr::kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matr
 ```
 
 
-The growth of phytoplankton is increasing its concentration `C` and decreasing the nutrient `HPO4` by the fraction of `a_P`, which is the Phosphorus conten of the phytoplankton. Decay/death is just decreasing phytoplankton concentration `C`.
+The growth of phytoplankton is increasing its concentration $C$ and decreasing the nutrient $HPO4$ by the fraction of $a_P$, which is the Phosphorus conten of the phytoplankton. Decay/death is just decreasing phytoplankton concentration $C$.
 
-Having declared all five data frames we can now generate the fortran code using `gen_fabm_code()`. This will also perfome some automated checks e.g. if all used parameters and state variables are also declared, and will issue a warning if the used units are not using seconds for time. It will also create the *FABM* control file `fabm.yaml` and insert the default values for parameters and initial values (if declared).
+Having declared all five data frames we can now generate the fortran code using `gen_fabm_code()`. This will also perfome some automated checks e.g. if all used parameters and state variables are also declared, and will issue a warning if the used units are not using seconds for time. It will also create the *FABM* control file `fabm.yaml` and insert the default values for parameters and initial values (if declared). If the argument `diags` is set to `TRUE` the process rates are stored as diagnostic variables in the output netcdf file. 
 
 ```{r message=FALSE, warning=FALSE, results="hide"}
 # create the fabm code
-gen_fabm_code(vars, pars, funs, pros, stoi, "model_1.f90")
+gen_fabm_code(vars, pars, funs, pros, stoi, "model_1.f90", diags = TRUE)
 ```
 
-After creating the fortran source code, GOTM-FABM can be automatically compiled (assuming the source code was allready fetched and prepared for compilation using `clone_GOTM()`) unsing the function `build_GOTM()`, this will also copy the compiled executable to the current working directory, which then can be ran using e.g. `system2("./gotm")`. 
+After creating the fortran source code, *GOTM-FABM* can be automatically compiled unsing the function `build_GOTM()` (assuming the source code was allready fetched and prepared for compilation using `clone_GOTM()`), this will also copy the compiled executable to the current working directory, which then can be ran using e.g. `system2("./gotm")`. 
 
 ```{r message=FALSE, warning=FALSE, results="hide"}
 # build GOTM with the model
@@ -327,16 +327,16 @@ plot_vari("output.nc", "rodeo_HPO4")
 
 
 
-### Getting forcing data from the host model
+### Getting dependencies from the host model
 
-In the next step we want to add the dependency of growth on available iradiation. Therefore we need to get the photosynthetic active radiation (PAR) from GOTM.
+As many biogeochemical processes depend on external forcing, such as temperature or available iradiation, these values can be obtained from the physical host model. In the next step we want to add the dependency of phytoplankton growth on available iradiation. We first copy the prepared spread sheet and declare the data frames:
 
 ```{r message=FALSE, warning=FALSE, results="hide"}
 ods <- system.file("extdata/examples/simple_alg_par.ods",
                    package = "rodeoFABM")
 file.copy(from = ods, to = ".", recursive = TRUE)
 
-# read in first simple model
+# declare data frames for vars, pars, funs, pros, and stoi
 vars <- read_ods("simple_alg_par.ods", sheet = "vars")
 pars <- read_ods("simple_alg_par.ods", sheet = "pars")
 funs <- read_ods("simple_alg_par.ods", sheet = "funs")
@@ -344,7 +344,7 @@ pros <- read_ods("simple_alg_par.ods", sheet = "pros")
 stoi <- read_ods("simple_alg_par.ods", sheet = "stoi")
 ```
 
-The data frame `funs` has three required columns that are the same as in `vars`, and `pars`: *name*, *unit*, and *description*. Additionally the column *dependency* is requred when you want to access forcing data from the coupled physical host model.
+Now we need to get values for the photosynthetic active radiation (PAR) from GOTM. *FABM* has so called "standard-variables" with defined names (stored in the `std_names_FABM` data). If you want to access these variables you need to defind them as a function in the `funs` data frame and add the additional column *dependency* wich contains the full standard-variable name. The data frame `funs` has three required columns that are the same as in `vars`, and `pars`: *name*, *unit*, and *description*, additionally the column *dependency*. If you declare several functions of whome some are not dependencies the corresponding entry in column *dependency* needs to be `NA` for these and the corresponding standard-name for the ones that are dependencies.
 
 ```{r, echo=FALSE}
 library(rodeo)
@@ -354,7 +354,7 @@ funs_t$name <- gsub("_", "\\_", funs_t$name, fixed = TRUE)
 knitr::kable(funs_t, caption="Data set `funs`: Declaration of model functions and dependencies from the host model.")
 ```
 
-The function/dependencies can be used in the process expression same as parameters and state variables. We added a Monod Term for light limitation in the *growth* process:
+The declared functions/dependencies can now be used in the process expression, same as parameters and state variables. We added a Monod Term for light limitation in the *growth* process:
 
 ```{r, echo=FALSE}
 library(rodeo)
@@ -368,12 +368,21 @@ pros_t$expression <- paste0("$",pros_t$expression, "$")
 knitr::kable(pros_t, caption="Data set `pros`: Declaration of processes.")
 ```
 
+For this we need to declare the additional parameter for the half-saturation irradiation in the `pars` data frame:
 
-Now we can run the adapted model.
+```{r, echo=FALSE}
+library(rodeo)
+pars_t <- pars
+pars_t$name <- paste0("$",pars_t$name, "$")
+pars_t$name <- gsub("_", "\\_", pars_t$name, fixed = TRUE)
+knitr::kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
+```
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, dpi = 72}
+Now we can generate the fortran code, compile *GOTM-FABM*, and run the adapted model.
+
+```{r message=FALSE, warning=FALSE, results="hide"}
 # create the fabm code
-gen_fabm_code(vars, pars, funs, pros, stoi, "model_2.f90")
+gen_fabm_code(vars, pars, funs, pros, stoi, "model_2.f90", diags = TRUE)
 
 # build GOTM with the model
 build_GOTM(build_dir = "build", src_dir = "gotm_src/extern/fabm/src/models/tuddhyb/rodeo/",
@@ -381,11 +390,19 @@ build_GOTM(build_dir = "build", src_dir = "gotm_src/extern/fabm/src/models/tuddh
 
 # run the model
 system2("./gotm")
+```
 
+And plot some of the simulated state variables:
+
+```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, dpi = 72}
 # plot the variables
 plot_vari("output.nc", "rodeo_C")
 plot_vari("output.nc", "rodeo_HPO4")
+```
 
+From the saved process rates (the diagnostic variables) we can plot e.g. the net. growth rate. We can acces the values stored in the netcdf file e.g. using the function `gotmtools::get_vari()` and plot them using `gotmtools::long_heatmap()`:
+
+```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, dpi = 72}
 # also plot net. growth
 growth <- get_vari("output.nc", "rodeo_growth")
 death <- get_vari("output.nc", "rodeo_death")
@@ -395,16 +412,16 @@ long_heatmap(wide2long(net_growth, z))
 ```
 
 
-## sedimentation
+## Sedimentation
 
-algae are settling. copy files from package
+Often in biogeochemical models some state variables are sinking in the water body (e.g. phytoplankton or particular organic matter). In the next adaptation of the model we want to include a constant sinking velocuty for the phytoplankton. Therefore, again we first copy the spread sheets from the package data and declare the data frames:
 
 ```{r message=FALSE, warning=FALSE, results="hide"}
 ods <- system.file("extdata/examples/simple_alg_par_sed.ods",
                    package = "rodeoFABM")
 file.copy(from = ods, to = ".", recursive = TRUE)
 
-# read in first simple model
+# declare data frames for vars, pars, funs, pros, and stoi
 vars <- read_ods("simple_alg_par_sed.ods", sheet = "vars")
 pars <- read_ods("simple_alg_par_sed.ods", sheet = "pars")
 funs <- read_ods("simple_alg_par_sed.ods", sheet = "funs")
@@ -412,7 +429,7 @@ pros <- read_ods("simple_alg_par_sed.ods", sheet = "pros")
 stoi <- read_ods("simple_alg_par_sed.ods", sheet = "stoi")
 ```
 
-we add a process `sed` and declare the pocess as settling process by using the additional column `sedi` in the `pros` data frame.
+*FABM* allows for time varying sinking of state variables. This in implemented in *rodeoFABM* as a process declared in the `pros` data frame that has a logical flag set in an additional column called *sedi*. The expression for this can also be a function of external dependencies (e.g. water density) or internal state variables (e.g. nutrient concentration), in this simple case we choose a constant sinking velocity:
 
 ```{r, echo=FALSE}
 library(rodeo)
@@ -426,11 +443,33 @@ pros_t$expression <- paste0("$",pros_t$expression, "$")
 knitr::kable(pros_t, caption="Data set `pros`: Declaration of processes.")
 ```
 
-Add to stopicheometry:
+For this to work we need to declare the additional parameter for the sinking velocity:
+
+```{r, echo=FALSE}
+library(rodeo)
+pars_t <- pars
+pars_t$name <- paste0("$",pars_t$name, "$")
+pars_t$name <- gsub("_", "\\_", pars_t$name, fixed = TRUE)
+knitr::kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
+```
 
 
+And add the process to the stopichiometry table:
 
-compile, run model and plot results
+```{r, echo=FALSE}
+library(rodeo)
+stoi_t <- stoi
+stoi_t$expression <- gsub("*", " \\cdot ", stoi_t$expression, fixed = TRUE)
+stoi_t$expression <- gsub("+", " + ", stoi_t$expression, fixed = TRUE)
+stoi_t$expression <- gsub("/", " / ", stoi_t$expression, fixed = TRUE)
+stoi_t$expression <- gsub("_", "\\_", stoi_t$expression, fixed = TRUE)
+stoi_t$expression <- paste0("$",stoi_t$expression, "$")
+stoi_t$variable <- paste0("$",stoi_t$variable, "$")
+stoi_t$variable <- gsub("_", "\\_", stoi_t$variable, fixed = TRUE)
+knitr::kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in long format.")
+```
+
+Now we can create the fortran source file, compile *GOTM-FABM*, run the model and plot some of the results:
 
 ```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, dpi = 72}
 # create the fabm code
@@ -458,7 +497,7 @@ long_heatmap(wide2long(net_growth, z))
 
 ### Processes at the upper and lower boundaries (surface and sediment)
 
-Add oxygen along with surface exchange and a constant oxygen consumption
+There are some processes that only take place at the surface or bottom (sediment) of lakes. *FABM* knows three spatial domains: open water (pelagial), surface, and bottom (sediment) and processes can be declared to only take place at one of these domaines. To demonstrate this we add oxygen along with surface exchange and a constant oxygen consumption in the sediment to the model. We again start by copying the spread sheet from the package data:
 
 ```{r message=FALSE, warning=FALSE, results="hide"}
 ods <- system.file("extdata/examples/simple_alg_O2.ods",
@@ -472,7 +511,7 @@ pros <- read_ods("simple_alg_O2.ods", sheet = "pros")
 stoi <- read_ods("simple_alg_O2.ods", sheet = "stoi")
 ```
 
-Add new state variable `O2` oxygen consumption
+Now we need to add the new state variable $O2$ to the `vars` data frame:
 
 ```{r, echo=FALSE}
 library(rodeo)
@@ -483,7 +522,7 @@ knitr::kable(vars_t, caption="Data set `vars`: Declaration of state variables.")
 ```
 
 
-Add new processes with exchange at the surface and consumption in the sediment:
+If processes occure only at the surface or bottom interface we can declare this by setting a logical flag in additional columns in the `pros` data frame called *bot* and *surf*. We add two new processes *O2_exch*, and *O2_cons* and set the flag in the corresponding columns to `TRUE`:
 
 ```{r, echo=FALSE}
 library(rodeo)
@@ -497,10 +536,42 @@ pros_t$expression <- paste0("$",pros_t$expression, "$")
 knitr::kable(pros_t, caption="Data set `pros`: Declaration of processes.")
 ```
 
-Add to stoicheometry:
+We need to declare the two additional parameter for the oxygen exchange velocity and the constant consumption in the sediment:
 
+```{r, echo=FALSE}
+library(rodeo)
+pars_t <- pars
+pars_t$name <- paste0("$",pars_t$name, "$")
+pars_t$name <- gsub("_", "\\_", pars_t$name, fixed = TRUE)
+knitr::kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
+```
 
-And compile, run model, and plot results:
+And we need to declare the two functions used $log$, and $exp$, as well as the external dependencies $p$ (the barometric pressure at the surface), and $Temp$ (water temperature) which are needed to calculate the oxygen saturation concentration:
+
+```{r, echo=FALSE}
+library(rodeo)
+funs_t <- funs
+funs_t$name <- paste0("$",funs_t$name, "$")
+funs_t$name <- gsub("_", "\\_", funs_t$name, fixed = TRUE)
+knitr::kable(funs_t, caption="Data set `funs`: Declaration of model functions and dependencies from the host model.")
+```
+
+After adding the new processes to the stoichiometry table:
+
+```{r, echo=FALSE}
+library(rodeo)
+stoi_t <- stoi
+stoi_t$expression <- gsub("*", " \\cdot ", stoi_t$expression, fixed = TRUE)
+stoi_t$expression <- gsub("+", " + ", stoi_t$expression, fixed = TRUE)
+stoi_t$expression <- gsub("/", " / ", stoi_t$expression, fixed = TRUE)
+stoi_t$expression <- gsub("_", "\\_", stoi_t$expression, fixed = TRUE)
+stoi_t$expression <- paste0("$",stoi_t$expression, "$")
+stoi_t$variable <- paste0("$",stoi_t$variable, "$")
+stoi_t$variable <- gsub("_", "\\_", stoi_t$variable, fixed = TRUE)
+knitr::kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in long format.")
+```
+
+We can generate the source code, compile *GOTM-FABM*, run the model, and plot some of the results:
 
 ```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, dpi = 72}
 # create the fabm code
@@ -539,16 +610,45 @@ stoi <- read_ods("simple_alg_O2_POM.ods", sheet = "stoi")
 
 Add two new state variables `POM` and `SPOM`, declare `SPOM` as bottom bound state variable:
 
-
+```{r, echo=FALSE}
+library(rodeo)
+vars_t <- vars
+vars_t$name <- paste0("$",vars_t$name, "$")
+vars_t$name <- gsub("_", "\\_", vars_t$name, fixed = TRUE)
+knitr::kable(vars_t, caption="Data set `vars`: Declaration of state variables.")
+```
 
 Add new process:
 
+```{r, echo=FALSE}
+library(rodeo)
+pros_t <- pros
+pros_t$expression <- gsub("*", " \\cdot ", pros_t$expression, fixed = TRUE)
+pros_t$expression <- gsub("+", " + ", pros_t$expression, fixed = TRUE)
+pros_t$expression <- gsub("-", " - ", pros_t$expression, fixed = TRUE)
+pros_t$expression <- gsub("/", " / ", pros_t$expression, fixed = TRUE)
+pros_t$expression <- gsub("_", "\\_", pros_t$expression, fixed = TRUE)
+pros_t$expression <- paste0("$",pros_t$expression, "$")
+knitr::kable(pros_t, caption="Data set `pros`: Declaration of processes.")
+```
 
 Change Stoicheometry:
 
+```{r, echo=FALSE}
+library(rodeo)
+stoi_t <- stoi
+stoi_t$expression <- gsub("*", " \\cdot ", stoi_t$expression, fixed = TRUE)
+stoi_t$expression <- gsub("+", " + ", stoi_t$expression, fixed = TRUE)
+stoi_t$expression <- gsub("/", " / ", stoi_t$expression, fixed = TRUE)
+stoi_t$expression <- gsub("_", "\\_", stoi_t$expression, fixed = TRUE)
+stoi_t$expression <- paste0("$",stoi_t$expression, "$")
+stoi_t$variable <- paste0("$",stoi_t$variable, "$")
+stoi_t$variable <- gsub("_", "\\_", stoi_t$variable, fixed = TRUE)
+knitr::kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in long format.")
+```
 
 
-compile, run model, and plot results:
+Create fortran source code, compile *GOTM-FABM*, run the model, and plot results:
 
 ```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, dpi = 72}
 # create the fabm code
@@ -588,9 +688,9 @@ By default the initial values for the *FABM* sate variables are constant through
 Therefore, you need to have (a) text file(s) with (the) profiles that you want to initialise and install the R packages `ncdf4`, `data.table`, `gotmtools` from the AEMON-J github. The approach is to first run GOTM with 0 time steps (stop date = start date). After a run with GOTM, a `restart.nc` file is created, that can be use to restart a simulation with the same settings that ended the previous simulation. By running with 0 time steps, this file contains the "standard" initial values, including the ones in your biogeochemical model. Then the you need to replaces the homogeneous initial profiles by your specified profiles in the `restart.nc` file. Lastly, you need to set the `restart` option to "true". If you run gotm now, it will run with the initial profiles for you biogeochemical model (note that you'll have to rerun this approach every time before you want to run GOTM, because every new GOTM run overwrites the `restart.nc` file). Alternatively you can save the created `restart.nc` file e.g. as `restart_init_profiles.nc` and use this file to override the `restart.nc` before you run GOTM.
 
 
-### automatic model documentation
+### Automatic model documentation
 
-if wanted `rodeoFABM` can automatically generate LaTeX documentation of the state variables, parameter, processes and stoichometry. still under developement! 
+if wanted `rodeoFABM` can automatically generate LaTeX documentation of the state variables, parameter, processes and stoichometry. Still under developement! For table generation use e.g. the package `xtable`.
 
 
 
