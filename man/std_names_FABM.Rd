@@ -4,14 +4,16 @@
 \name{std_names_FABM}
 \alias{std_names_FABM}
 \title{standard names for dependencie variables in FABM.}
-\format{A data.frame with 38 rows and 3 columns:
+\format{
+A data.frame with 38 rows and 3 columns:
 \describe{
   \item{Variable}{name of the standard variable}
   \item{Units}{Units of the standard variable}
   \item{Corresponding name in CF convention}{the corresponding name in CF convention
   \url{http://cfconventions.org/Data/cf-standard-names/28/build/cf-standard-name-table.html}}
 
-}}
+}
+}
 \source{
 \url{https://github.com/fabm-model/fabm/wiki/List-of-standard-variables}
 }

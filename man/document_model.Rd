@@ -4,7 +4,7 @@
 \alias{document_model}
 \title{Function to create LaTeX documentation of a model}
 \usage{
-document_model(vars, pars, pros, funs, stoi)
+document_model(vars, pars, pros, funs, stoi, landscape = TRUE, tex = "tex")
 }
 \arguments{
 \item{vars}{data.frame containing the state variables}
@@ -16,6 +16,10 @@ document_model(vars, pars, pros, funs, stoi)
 \item{funs}{data.frame containing the functions}
 
 \item{stoi}{data.frame containing the stoichiometry}
+
+\item{landscape}{boolean, should the process expression table be in landscape?}
+
+\item{tex}{name of the column containing the LaTeX expressions to use as symbols}
 }
 \description{
 This function creates LaTeX tables from the tables used to generate the FABM source code.

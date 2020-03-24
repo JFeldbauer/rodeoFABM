@@ -4,12 +4,14 @@
 \name{hypsograph}
 \alias{hypsograph}
 \title{Generic hypsographic curve.}
-\format{A text file (.dat) with two columns
+\format{
+A text file (.dat) with two columns
 \describe{
   \item{level}{Depth below water surface in m}
   \item{Area}{Surface area at depth in m^2}
 
-}}
+}
+}
 \usage{
 data(hypsograph)
 }

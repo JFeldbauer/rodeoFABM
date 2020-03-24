@@ -4,7 +4,8 @@
 \name{meteo_file}
 \alias{meteo_file}
 \title{Example meteorological forcing data for GOTM.}
-\format{A text file (.dat) with nine columns
+\format{
+A text file (.dat) with nine columns
 \describe{
   \item{datetime}{Day of the observation}
   \item{Uwind}{North-South wind speed in m/s}
@@ -15,7 +16,8 @@
   \item{cloudCover}{Cloud cover as decimal fraction}
   \item{short}{Shortwave radiation downwelling in W/m^2}
   \item{rain}{Daily average precipitation in m/s}
-}}
+}
+}
 \source{
 \url{https://opendata.dwd.de/climate_environment/CDC/}
 }

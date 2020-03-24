@@ -106,8 +106,16 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
   fileConn <- file("tab_funs.tex")
   writeLines(table_funs, fileConn)
   close(fileConn)
+  
+  # is linebreak necessary for the process equations
+  mn <- ifelse(landscape, 12, 18)
+  p_break <- (1:(nrow(pros) %/% mn))*mn
+  if(max(p_break == nrow(pros))) {
+    p_break <- p_break[-length(p_break)]
+  }
   # table of process rates
-  pros_eq <- equation_maker(vars, pars, pros, funs, landscape = landscape, tex = tex)
+  pros_eq <- equation_maker(vars, pars, pros, funs, landscape = landscape, tex = tex,
+                            split.at = p_break)
   # write to file
   fileConn<-file("pros_expr.tex")
   writeLines(pros_eq, fileConn)
@@ -193,6 +201,8 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
   writeLines(stoi_table, fileConn)
   close(fileConn)
 
+  # copy example document file
+  file.copy(system.file("extdata/document_model.tex", package = "rodeoFABM"), ".")
   cat("\n finished \n")
   return(TRUE)
 }
@@ -308,7 +318,7 @@ equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = 
   if(landscape){
     text_out <- paste0(text_out, "\\begin{landscape}", newline)
   }
-  text_out <- paste0(text_out, "\\begin{align}", newline , "\\footnotesize", newline)
+  text_out <- paste0(text_out, "\\begin{align}", newline)
 
   # go through every process
   for(i in 1:npros){
@@ -317,7 +327,7 @@ equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = 
 
     text_out <- paste0(text_out," ",pros[i, tex]," =&~ ")
 
-    temp_str <- gsub("([\\+-\\+\\/,])", " \\1 ", pros$expression[i])
+    temp_str <- gsub("([\\*\\+\\-\\/\\,])", " \\1 ", pros$expression[i])
     temp_str <- gsub("(", " \\left( ", temp_str, fixed = TRUE)
     temp_str <- gsub(")", " \\right) ", temp_str, fixed = TRUE)
     temp_str <- gsub("\\s+", " ", temp_str, fixed = FALSE)
@@ -387,11 +397,15 @@ equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = 
   if(landscape) {
     text_out <- paste0(text_out, "\\end{landscape}")
   }
-  # remove doublicate whitespaces
-  text_out <- gsub("[ ]+", " ", text_out,fixed = FALSE)
   # remove whitespace before right braket
   text_out <- gsub(", \\right)", "\\right)", text_out, fixed = TRUE)
-
+  # remove whitespace before and after curly braket
+  text_out <- gsub(" }", "}", text_out, fixed = TRUE)
+  text_out <- gsub("{ ", "{", text_out, fixed = TRUE)
+  # remove whitespace before comma
+  text_out <- gsub(" ,", ",", text_out, fixed = TRUE)
+  # remove doublicate whitespaces
+  text_out <- gsub("[ ]+", " ", text_out,fixed = FALSE)
   # return created table
   return(text_out)
 }
