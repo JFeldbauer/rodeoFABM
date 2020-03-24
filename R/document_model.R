@@ -104,7 +104,7 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
 
   if(tex %in% colnames(pros)){
     pros_t <- pros[, c(tex, "unit", "description")]
-    colnames(pars_t) <- c("name", "unit", "description")
+    colnames(pros_t) <- c("name", "unit", "description")
   } else  {
     pros_t <- pros[, c("name", "unit", "description")]
   }
@@ -187,11 +187,11 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
     forc_tex <- forc_tex[, c("name", "name")]
     colnames(forc_tex) <- c("name", tex)
   }
-  for(i in 1:length(vars_tex$tex)) {
-    stoi_t$variable[stoi_t$variable == vars_tex$name[i]] <- vars_tex$tex[i]
+  for(i in 1:length(vars_tex[, tex])) {
+    stoi_t$variable[stoi_t$variable == vars_tex$name[i]] <- vars_tex[i, tex]
   }
-  for(i in 1:length(pros_tex$tex)) {
-    stoi_t$process[stoi_t$process == pros_tex$name[i]] <- pros_tex$tex[i]
+  for(i in 1:length(pros_tex[, tex])) {
+    stoi_t$process[stoi_t$process == pros_tex$name[i]] <- pros_tex[i, tex]
   }
 
   stoi_t$`stoicheometry factor` <- paste0(" ", stoi_t$`stoicheometry factor`)
@@ -218,15 +218,15 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
     splitted <- unlist(strsplit(stoi_t$`stoicheometry factor`[i], " "))
     splitted <- splitted[splitted != ""]
 
-    for(j in 1:length(pars_tex$tex)) {
+    for(j in 1:length(pars_tex[, tex])) {
 
-      splitted[splitted == pars_tex$name[j]] <- pars_tex$tex[j]
+      splitted[splitted == pars_tex$name[j]] <- pars_tex[j, tex]
 
     }
 
     for(j in 1: length(forc_tex$name)) {
 
-      splitted[splitted == forc_tex$name[j]] <- forc_tex$tex[j]
+      splitted[splitted == forc_tex$name[j]] <- forc_tex[j, tex]
 
     }
 
