@@ -9,6 +9,13 @@ Authors@R:
            comment = c(ORCID = "000-0002-8238-5375"))
 Description: Create FABM fortran90 code from data.frames.
 License: GPL (>= 2)
+Imports:
+   rodeo
+VignetteBuilder: knitr
+Suggests:
+    knitr,
+    rmarkdown,
+    xtable
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.0
