@@ -35,6 +35,8 @@ options(vignetteDocumentFormat= rmarkdown::all_output_formats("rodeoFABMVignette
 options(width=120)
 library(knitr)
 library(xtable)
+knit_hooks$set(optipng = hook_optipng)
+knit_hooks$set(pngquant = hook_pngquant)
 options(xtable.caption.placement = 'top',
         xtable.include.rownames = FALSE,
         xtable.comment = FALSE,
@@ -149,7 +151,7 @@ We can plot the results e.g. using the `gotmtools` library, which can be install
 ```{r eval=FALSE}
 devtools:::install_github("aemon-j/gotmtools")
 ```
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, dpi = 72}
+```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
 library(gotmtools)
 # plot temperature
 plot_vari("output.nc", "temp")
@@ -320,7 +322,7 @@ system2("./gotm")
 
 We can now plot the model results e.g. using `gotmtools::plot_vari()`.
 
-```{r fig.height=3, fig.width=6, message=FALSE, warning=FALSE, dpi=72, results="hide"}
+```{r fig.height=3, fig.width=6, message=FALSE, warning=FALSE, optipng = '-o7', results="hide"}
 # plot the variables
 plot_vari("output.nc", "rodeo_C")
 plot_vari("output.nc", "rodeo_HPO4")
@@ -395,7 +397,7 @@ system2("./gotm")
 
 And plot some of the simulated state variables:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, dpi = 72}
+```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
 # plot the variables
 plot_vari("output.nc", "rodeo_C")
 plot_vari("output.nc", "rodeo_HPO4")
@@ -403,7 +405,7 @@ plot_vari("output.nc", "rodeo_HPO4")
 
 From the saved process rates (the diagnostic variables) we can plot e.g. the net. growth rate. We can acces the values stored in the netcdf file e.g. using the function `gotmtools::get_vari()` and plot them using `gotmtools::long_heatmap()`:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, dpi = 72}
+```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
 # also plot net. growth
 growth <- get_vari("output.nc", "rodeo_growth")
 death <- get_vari("output.nc", "rodeo_death")
@@ -472,7 +474,7 @@ kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in l
 
 Now we can create the fortran source file, compile *GOTM-FABM*, run the model and plot some of the results:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, dpi = 72}
+```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
 # create the fabm code
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_3.f90")
 
@@ -579,7 +581,7 @@ kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in l
 
 We can generate the source code, compile *GOTM-FABM*, run the model, and plot some of the results:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, dpi = 72}
+```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
 # create the fabm code
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_4.f90")
 
@@ -597,7 +599,7 @@ plot_vari("output.nc", "rodeo_O2")
 ```
 
 
-### Sediment or surface attached state variables
+### Sediment or surface attached state variables{#final_model}
 
 As mentioned before *FABM* recognizes three spatial domains: open water, surface, and sediment. Like Processes, also state variables can be attaced to one of these domaines (e.g. sedimented particulated organic matter). To demonstrate this feature we will include two mroe state variables in our model; particulated organic matter ($POM$) and sedimented particulated organic matter ($SPOM$). Again we first need to copy the spread sheet from the package:
 
@@ -619,7 +621,7 @@ Then we add the two new state variables $POM$ and $SPOM$. We declare $SPOM$ as b
 ```{r, echo=FALSE}
 library(rodeo)
 
-vars_t <- vars
+vars_t <- vars[,colnames(vars)!="tex"]
 vars_t$name <- paste0("$",vars_t$name, "$")
 vars_t$name <- gsub("_", "\\_", vars_t$name, fixed = TRUE)
 kable(vars_t, caption="Data set `vars`: Declaration of state variables.")
@@ -628,7 +630,7 @@ kable(vars_t, caption="Data set `vars`: Declaration of state variables.")
 The death of algae generates $POM$, which settles down, and sediments to the ground to become $SPOM$. Both $POM$ and $SPOM$ are mineralized, releasing $HPO4$ but the mineralization is faster in the sediment. We add the new sinking, sedimentation, and mineralization processes to the `pros` data frame:
 
 ```{r echo=FALSE}
-pros_t <- pros
+pros_t <- pros[,colnames(pros)!="tex"]
 pros_t$expression <- gsub("*", " \\cdot ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("+", " + ", pros_t$expression, fixed = TRUE)
 pros_t$expression <- gsub("-", " - ", pros_t$expression, fixed = TRUE)
@@ -663,7 +665,7 @@ And declare the new parameters for the sinking velocity, the mineralization kine
 
 ```{r, echo=FALSE}
 library(rodeo)
-pars_t <- pars
+pars_t <- pars[,colnames(pars)!="tex"]
 pars_t$name <- paste0("$",pars_t$name, "$")
 pars_t$name <- gsub("_", "\\_", pars_t$name, fixed = TRUE)
 kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
@@ -672,7 +674,7 @@ kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
 
 Now we can create fortran source code, compile *GOTM-FABM*, run the model, and plot the results:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, dpi = 72}
+```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
 # create the fabm code
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_5.f90")
 
@@ -712,8 +714,33 @@ Therefore, you need to have (a) text file(s) with (the) profiles that you want t
 
 ### Automatic model documentation
 
-if wanted `rodeoFABM` can automatically generate LaTeX documentation of the state variables, parameter, processes and stoichometry. Still under developement! For table generation use e.g. the package `xtable`.
+If wanted `rodeoFABM` can automatically generate LaTeX documentation of the state variables, parameter, processes and stoichometry. To do so the function `document_model()` can be used. Lets create a documentation of the final phytoplankton nutrients model from our [example](#final_model). In order to work we need an additional column named *tex* (you can also use another name for this column and supply the name to `document_model()` using the `tex` argument) in the data frames *vars*, *pars*, *funs*, and *pros* giving the corresponding LaTeX symbols to be used. The documentation function automatically generates LaTeX fraction, but in order for this to work all used fractions in the *expression* column of the *pros* data frame need to be in a specified format. The numerator and denominator need to be in brakets, even if they are just one single variable, number, or parameter: e.g. `(O2)/(O2 + K_O2)`. In the example spread sheet file they are allready added:
 
+```{r}
+# see column "tex"
+head(vars)
+# create LaTeX documentation for our model
+document_model(vars, pars, pros, funs, stoi, landscape = FALSE)
+```
+
+We can see that now there are seven additional file in our worling directory:
+
+```{r}
+grep(".*\\.tex", list.files(), value = TRUE)
+```
+
+They are LaTeX tables of the models state variables (*tab_vars.tex*), used model parameters (*tab_pars.tex*), used functions (*tab_funs.tex*), declaration of the models processes (*tab_pros.tex*), description of the process equations (*pros_expr.tex*), the stoichiometry table (*tab_stoi.tex*), and a very simple latex document that can be used to compile all of the before (*document_model.tex*).
+
+The created expressions of the processes now look like this:
+
+```{r}
+head(readLines("pros_expr.tex"))
+```
+
+and compiled they look like this:
+
+```{r test-main, child = "pros_expr.tex"}
+```
 
 
 ```{r cache=FALSE, include=FALSE}
@@ -725,7 +752,9 @@ file.remove(c("gotm", "model_1.f90", "model_2.f90", "model_3.f90", "model_4.f90"
               "model_5.f90", "simple_alg.ods", "meteo_file.dat", "inflow_m.dat",
               "outflow.dat", "inflow_wq_m.dat", "simple_alg_O2_POM.ods",
               "simple_alg_O2.ods", "simple_alg_par.ods", "simple_alg_par_sed.ods",
-              "hypsograph.dat", "output.nc", "restart.nc", "gotm.yaml", "fabm.yaml"))
+              "hypsograph.dat", "output.nc", "restart.nc", "gotm.yaml", "fabm.yaml",
+              "tab_vars.tex", "tab_pars.tex", "tab_funs.tex", "tab_pros.tex",
+              "tab_stoi.tex", "pros_expr.tex", "document_model.tex"))
 ```
 
 # References
