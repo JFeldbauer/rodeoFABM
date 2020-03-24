@@ -44,12 +44,12 @@
 #' 
 #' ## example with additional columns
 #' document_model(vars, pars, pros, funs, stoi, landscape = FALSE,
-#' ad_col = list(vars = list(col_name = "default",
-#'                           name_out = "init. value",
-#'                           math = FALSE),
-#'               pars = list(col_name = "default",
-#'                           name_out = "value",
-#'                           math = FALSE)))
+#'                ad_col = list(vars = list(col_name = "default",
+#'                                          name_out = "init. value",
+#'                                          math = FALSE),
+#'                              pars = list(col_name = "default",
+#'                                          name_out = "value",
+#'                                          math = FALSE)))
 #' }
 #'
 
