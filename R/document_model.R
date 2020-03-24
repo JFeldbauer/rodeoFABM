@@ -51,7 +51,8 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
   # creat table of state variables
   table_vars <- table_maker(vars_t, title = "Used state variables", label = "tab:vars",
                             math.cols=c(TRUE, FALSE, FALSE),
-                            caption = "Description and units of the considered state variablesin the model.")
+                            caption = paste0("Description and units of the considered state ",
+                                             "variablesin the model."))
   # write to file
   fileConn <- file("tab_vars.tex")
   writeLines(table_vars, fileConn)
@@ -66,7 +67,8 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
   # table of used parameters
   table_pars <- table_maker(pars_t, title="Description of biogeo-chemical parameters",
                             label = "tab:pars",
-                            caption = "Description and units of the used biogeo-chemical parameters in the model.",
+                            caption = paste0("Description and units of the used biogeo-chemical ",
+                            "parameters in the model."),
                             math.cols=c(T,F,F))
   # write to file
   fileConn <- file("tab_pars.tex")
@@ -82,7 +84,8 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
   # table of processes
   table_pros <- table_maker(pros_t,title = "Symbols of biogeo-chemical process rates",
                             label = "tab:pros", math.cols=c(TRUE, FALSE, FALSE),
-                            caption = "Description, used symbol and units of the biogeo-chemical process rates in the model.")
+                            caption = paste0("Description, used symbol and units of the ",
+                                             "biogeo-chemical process rates in the model."))
   # write to file
   fileConn <- file("tab_pros.tex")
   writeLines(table_pros, fileConn)
@@ -97,7 +100,8 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
   # table of processes
   table_funs <- table_maker(funs_t,title = "Symbols of declared functions",
                             label = "tab:pros", math.cols=c(TRUE, FALSE, FALSE),
-                            caption = "Description, used symbol and units of functions used in the model.")
+                            caption = paste0("Description, used symbol and units of functions ",
+                                             "used in the model."))
   # write to file
   fileConn <- file("tab_funs.tex")
   writeLines(table_funs, fileConn)
@@ -179,7 +183,10 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
 
   stoi_table <- table_maker(stoi_t, math.cols = c(TRUE, TRUE, TRUE), col.split = 45,
                             title = "Complete stoicheometry table",
-                            caption = " Complete stoicheometry table, giving the stoicheometry factors for every process onto every affected state variable, in long table format.",
+                            caption = paste0("Complete stoicheometry table, giving the ",
+                                             "stoicheometry factors for every process onto ",
+                                             "every affected state variable, in long ",
+                                             "table format."),
                             label = "tab:stoi_tot")
   # write to file
   fileConn<-file("tab_stoi.tex")
@@ -209,6 +216,14 @@ table_maker <- function(data, caption = "", title = "", label = "", style = "l",
   text_out <- ""
   text_out <- paste0(text_out, " \\begin{table}[H] ", newline)
   text_out <- paste0(text_out, " \\centering ", newline)
+  if(caption!="") {
+    text_out <- paste0(text_out, " \\caption[", title)
+    text_out <- paste0(text_out, "]{", caption)
+    text_out <- paste0(text_out, "} ", newline)
+  }
+  if(label != "") {
+    text_out <- paste0(text_out, "\\label{", label, "} ", newline)
+  }
   text_out <- paste0(text_out, " \\begin{tabular}{", paste0(rep(style, no_cols), collapse = ""))
   text_out <- paste0(text_out, "}\\hline", newline)
 
@@ -274,14 +289,6 @@ table_maker <- function(data, caption = "", title = "", label = "", style = "l",
   }
 
   text_out <- paste0(text_out, " \\hline \\end{tabular} ", newline)
-  if(caption!="") {
-    text_out <- paste0(text_out, " \\caption[", title)
-    text_out <- paste0(text_out, "]{", caption)
-    text_out <- paste0(text_out, "} ", newline)
-  }
-  if(label != "") {
-    text_out <- paste0(text_out, "\\label{", label, "} ", newline)
-  }
   text_out <- paste0(text_out, "\\end{table}")
 
   return(text_out)
@@ -301,7 +308,7 @@ equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = 
   if(landscape){
     text_out <- paste0(text_out, "\\begin{landscape}", newline)
   }
-  text_out <- paste0(text_out, "\\begin{align}", newline)
+  text_out <- paste0(text_out, "\\begin{align}", newline , "\\footnotesize", newline)
 
   # go through every process
   for(i in 1:npros){
@@ -310,13 +317,9 @@ equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = 
 
     text_out <- paste0(text_out," ",pros[i, tex]," =&~ ")
 
-    temp_str <- gsub("+", " + ", pros$expression[i], fixed = TRUE)
-    temp_str <- gsub("-", " - ", temp_str, fixed = TRUE)
-    temp_str <- gsub("*", " * ", temp_str, fixed = TRUE)
-    temp_str <- gsub("/", " / ", temp_str, fixed = TRUE)
+    temp_str <- gsub("([\\+-\\+\\/,])", " \\1 ", pros$expression[i])
     temp_str <- gsub("(", " \\left( ", temp_str, fixed = TRUE)
     temp_str <- gsub(")", " \\right) ", temp_str, fixed = TRUE)
-    temp_str <- gsub(",", " , ", temp_str, fixed = TRUE)
     temp_str <- gsub("\\s+", " ", temp_str, fixed = FALSE)
 
     splitted <- unlist(strsplit(temp_str," "))
@@ -341,70 +344,13 @@ equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = 
     splitted[splitted == "*"] <- "\\cdot"
 
     # create fractions
-    for(j in 1:length(splitted)) {
-
-      if(splitted[j]=="/"){
-        frac <- TRUE
-        splitted[j] <- "}{"
-
-        #left side
-        closed <- TRUE
-        count <- 0
-        k <- j
-        
-        while(closed){
-          k <- k-1
-          if((splitted[k] == "\\right)")){
-            if(count<1) {
-              splitted[k] <- ""
-            }
-            count <- count + 1
-          }
-
-          if(splitted[k] == "\\left("){
-            if(count == 1) {
-              splitted[k] <- "\\frac{"
-            }
-            count <- count-1
-            if(count == 0) {
-              closed <- FALSE
-            }
-          }
-        }
-
-        #right side
-        closed <- TRUE
-        count <- 0
-        k <- j
-        while(closed) {
-          k <- k + 1
-          if((splitted[k] == "\\left(")){
-            if(count < 1) {
-              splitted[k] <- ""
-            }
-            count <- count + 1
-          }
-          if((splitted[k] == "/")) {
-            count <- count + 1
-          }
-          if(splitted[k] == "\\right)") {
-            if(count == 1 ){
-              splitted[k] <- "}"
-            }
-            count <- count - 1
-
-            if(count == 0) {
-              closed <- FALSE
-            }
-          }
-        }
-      }
-    }
+    splitted <- fraction_maker(splitted)
 
 
-    # max number of processes
-    nos <- ifelse(landscape, 32, 23)
-    # if grater split expression over several rows
+    # max number of elements per line
+    nos <- ifelse(landscape, 28, 19)
+    
+    # if grater split expression over several lines
     if(length(splitted) > nos) {
       split_at <- which(splitted == "\\cdot")
       split_at <- split_at[split_at > nos][1]
@@ -413,20 +359,21 @@ equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = 
                       splitted[split_at:length(splitted)])
       }
     }
-
+    
+    # if there are fractions add extra empty line (for readability)
     if(frac & i != npros) {
       splitted <- c(splitted, "\\\\", "\\nonumber")
     }
 
     text_out <- paste0(text_out, paste0(splitted, collapse = " "))
 
-    # split table over several pages
+    # if specified split table over several pages
     if(length(split.at) > 0) {
-      if(max(i == split.at)) {
+      if(any(i == split.at)) {
         text_out <- paste0(text_out,newline, "\\end{align}", newline)
         text_out <- paste0(text_out, "\\begin{align}")
       }
-      if(min(i != split.at)) {
+      if(all(i != split.at)) {
         text_out <- paste0(text_out, ifelse(i == npros, "", ""), "\\\\", newline)
       }
     }
@@ -442,11 +389,76 @@ equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = 
   }
   # remove doublicate whitespaces
   text_out <- gsub("[ ]+", " ", text_out,fixed = FALSE)
-  # remove whitespace before braket closes
+  # remove whitespace before right braket
   text_out <- gsub(", \\right)", "\\right)", text_out, fixed = TRUE)
 
   # return created table
   return(text_out)
+}
+
+
+fraction_maker <- function(text){
+  
+  for(j in 1:length(text)) {
+    
+    if(text[j]=="/"){
+      frac <- TRUE
+      text[j] <- "}{"
+      
+      #left side
+      closed <- TRUE
+      count <- 0
+      k <- j
+      
+      while(closed){
+        k <- k-1
+        if((text[k] == "\\right)")){
+          if(count<1) {
+            text[k] <- ""
+          }
+          count <- count + 1
+        }
+        
+        if(text[k] == "\\left("){
+          if(count == 1) {
+            text[k] <- "\\frac{"
+          }
+          count <- count-1
+          if(count == 0) {
+            closed <- FALSE
+          }
+        }
+      }
+      
+      #right side
+      closed <- TRUE
+      count <- 0
+      k <- j
+      while(closed) {
+        k <- k + 1
+        if((text[k] == "\\left(")){
+          if(count < 1) {
+            text[k] <- ""
+          }
+          count <- count + 1
+        }
+        if((text[k] == "/")) {
+          count <- count + 1
+        }
+        if(text[k] == "\\right)") {
+          if(count == 1 ){
+            text[k] <- "}"
+          }
+          count <- count - 1
+          
+          if(count == 0) {
+            closed <- FALSE
+          }
+        }
+      }
+    }
+  }
+  return(text)
 }
 
 math <- function(x) {
