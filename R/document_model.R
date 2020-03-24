@@ -373,7 +373,7 @@ equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = 
 
     text_out <- paste0(text_out," ",pros[i, tex]," =&~ ")
 
-    temp_str <- gsub("([\\*\\+\\-\\/\\,])", " \\1 ", pros$expression[i])
+    temp_str <- gsub("([\\*\\+\\/\\,\\-])", " \\1 ", pros$expression[i])
     temp_str <- gsub("(", " \\left( ", temp_str, fixed = TRUE)
     temp_str <- gsub(")", " \\right) ", temp_str, fixed = TRUE)
     temp_str <- gsub("\\s+", " ", temp_str, fixed = FALSE)
