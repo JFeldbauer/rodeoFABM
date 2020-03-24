@@ -12,6 +12,11 @@
 #' @param stoi data.frame containing the stoichiometry
 #' @param landscape boolean, should the process expression table be in landscape?
 #' @param tex name of the column containing the LaTeX expressions to use as symbols
+#' @param ad_col named list of additional columns to add to the tables for vars, pars, 
+#'    funs, pros, and stoi. The elements of this list must be the corresponding name (e.g. vars)
+#'    and the list elements should give the name of the additional column (col_name), an
+#'    alternative name vor the column in the created table (name_out), and a boolen value if the
+#'    column should be created in math mode (math).
 #' @keywords FABM, GOTM, document, LaTeX
 #' @author Johannes Feldbauer
 #' @export
@@ -36,10 +41,20 @@
 #'
 #' # generate documentation
 #' document_model(vars,pars,pros,funs,stoi)
+#' 
+#' ## example with additional columns
+#' document_model(vars, pars, pros, funs, stoi, landscape = FALSE,
+#' ad_col = list(vars = list(col_name = "default",
+#'                           name_out = "init. value",
+#'                           math = FALSE),
+#'               pars = list(col_name = "default",
+#'                           name_out = "value",
+#'                           math = FALSE)))
 #' }
 #'
 
-document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "tex") {
+document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "tex",
+                           ad_col = list()) {
 
 
   if(tex %in% colnames(vars)){
@@ -48,9 +63,15 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
   } else  {
     vars_t <- vars[, c("name", "unit", "description")]
   }
+  mth <- c(TRUE, FALSE, FALSE)
+  if(length(ad_col$vars) > 0) {
+    vars_t <- cbind(vars_t, vars[, ad_col$vars$col_name])
+    colnames(vars_t) <- c("name", "unit", "description", ad_col$vars$name_out)
+    mth <- c(mth, ad_col$vars$math)
+  }
   # creat table of state variables
   table_vars <- table_maker(vars_t, title = "Used state variables", label = "tab:vars",
-                            math.cols=c(TRUE, FALSE, FALSE),
+                            math.cols = mth,
                             caption = paste0("Description and units of the considered state ",
                                              "variablesin the model."))
   # write to file
@@ -64,12 +85,18 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
   } else  {
     pars_t <- pars[, c("name", "unit", "description")]
   }
+  mth <- c(TRUE, FALSE, FALSE)
+  if(length(ad_col$pars) > 0) {
+    pars_t <- cbind(pars_t, pars[, ad_col$pars$col_name])
+    colnames(pars_t) <- c("name", "unit", "description", ad_col$pars$name_out)
+    mth <- c(mth, ad_col$pars$math)
+  }
   # table of used parameters
   table_pars <- table_maker(pars_t, title="Description of biogeo-chemical parameters",
                             label = "tab:pars",
                             caption = paste0("Description and units of the used biogeo-chemical ",
                             "parameters in the model."),
-                            math.cols=c(T,F,F))
+                            math.cols = mth)
   # write to file
   fileConn <- file("tab_pars.tex")
   writeLines(table_pars, fileConn)
@@ -81,9 +108,15 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
   } else  {
     pros_t <- pros[, c("name", "unit", "description")]
   }
+  mth <- c(TRUE, FALSE, FALSE)
+  if(length(ad_col$pros) > 0) {
+    pros_t <- cbind(pros_t, pros[, ad_col$pros$col_name])
+    colnames(pros_t) <- c("name", "unit", "description", ad_col$pros$name_out)
+    mth <- c(mth, ad_col$pros$math)
+  }
   # table of processes
   table_pros <- table_maker(pros_t,title = "Symbols of biogeo-chemical process rates",
-                            label = "tab:pros", math.cols=c(TRUE, FALSE, FALSE),
+                            label = "tab:pros", math.cols = mth,
                             caption = paste0("Description, used symbol and units of the ",
                                              "biogeo-chemical process rates in the model."))
   # write to file
@@ -97,9 +130,15 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
   } else  {
     funs_t <- funs[, c("name", "unit", "description")]
   }
+  mth <- c(TRUE, FALSE, FALSE)
+  if(length(ad_col$funs) > 0) {
+    funs_t <- cbind(funs_t, funs[, ad_col$funs$col_name])
+    colnames(funs_t) <- c("name", "unit", "description", ad_col$funs$name_out)
+    mth <- c(mth, ad_col$funs$math)
+  }
   # table of processes
   table_funs <- table_maker(funs_t,title = "Symbols of declared functions",
-                            label = "tab:pros", math.cols=c(TRUE, FALSE, FALSE),
+                            label = "tab:pros", math.cols = mth,
                             caption = paste0("Description, used symbol and units of functions ",
                                              "used in the model."))
   # write to file
@@ -125,6 +164,13 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
   stoi_t <- stoi[c("variable", "process", "expression")]
   colnames(stoi_t) <- c("variable", "process", "stoicheometry factor")
 
+  mth <- c(TRUE, TRUE, TRUE)
+  if(length(ad_col$stoi) > 0) {
+    stoi_t <- cbind(stoi_t, stoi[, ad_col$stoi$col_name])
+    colnames(stoi_t) <- c("variable", "process", "stoicheometry factor", ad_col$stoi$name_out)
+    mth <- c(mth, ad_col$stoi$math)
+  }
+  
   pars_tex <- pars[, c("name", tex)]
   vars_tex <- vars[, c("name", tex)]
   pros_tex <- pros
@@ -189,7 +235,7 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
   }
 
 
-  stoi_table <- table_maker(stoi_t, math.cols = c(TRUE, TRUE, TRUE), col.split = 45,
+  stoi_table <- table_maker(stoi_t, math.cols = mth, col.split = 45,
                             title = "Complete stoicheometry table",
                             caption = paste0("Complete stoicheometry table, giving the ",
                                              "stoicheometry factors for every process onto ",
@@ -371,7 +417,7 @@ equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = 
     }
     
     # if there are fractions add extra empty line (for readability)
-    if(frac & i != npros) {
+    if(frac & (i != npros)) {
       splitted <- c(splitted, "\\\\", "\\nonumber")
     }
 
@@ -384,7 +430,7 @@ equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = 
         text_out <- paste0(text_out, "\\begin{align}")
       }
       if(all(i != split.at)) {
-        text_out <- paste0(text_out, ifelse(i == npros, "", ""), "\\\\", newline)
+        text_out <- paste0(text_out, ifelse(i == npros, "", "\\\\"), newline)
       }
     }
     if(length(split.at) == 0) {

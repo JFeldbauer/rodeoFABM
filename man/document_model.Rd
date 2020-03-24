@@ -4,7 +4,16 @@
 \alias{document_model}
 \title{Function to create LaTeX documentation of a model}
 \usage{
-document_model(vars, pars, pros, funs, stoi, landscape = TRUE, tex = "tex")
+document_model(
+  vars,
+  pars,
+  pros,
+  funs,
+  stoi,
+  landscape = TRUE,
+  tex = "tex",
+  ad_col = list()
+)
 }
 \arguments{
 \item{vars}{data.frame containing the state variables}
@@ -20,6 +29,12 @@ document_model(vars, pars, pros, funs, stoi, landscape = TRUE, tex = "tex")
 \item{landscape}{boolean, should the process expression table be in landscape?}
 
 \item{tex}{name of the column containing the LaTeX expressions to use as symbols}
+
+\item{ad_col}{named list of additional columns to add to the tables for vars, pars, 
+funs, pros, and stoi. The elements of this list must be the corresponding name (e.g. vars)
+and the list elements should give the name of the additional column (col_name), an
+alternative name vor the column in the created table (name_out), and a boolen value if the
+column should be created in math mode (math).}
 }
 \description{
 This function creates LaTeX tables from the tables used to generate the FABM source code.
@@ -48,6 +63,15 @@ stoi <- read_ods(odf_file,5)
 
 # generate documentation
 document_model(vars,pars,pros,funs,stoi)
+
+## example with additional columns
+document_model(vars, pars, pros, funs, stoi, landscape = FALSE,
+ad_col = list(vars = list(col_name = "default",
+                          name_out = "init. value",
+                          math = FALSE),
+              pars = list(col_name = "default",
+                          name_out = "value",
+                          math = FALSE)))
 }
 
 }
