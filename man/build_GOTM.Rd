@@ -9,7 +9,7 @@ build_GOTM(build_dir, src_dir, fabm_file)
 \arguments{
 \item{build_dir}{build directory}
 
-\item{src_dir}{source directory. should be the FABM directory within the GOTM source directory}
+\item{src_dir}{GOTM source directory. The directory the GOTM source code was cloned into from github}
 
 \item{fabm_file}{forthran source file for FABM created by gen_fabm_code()}
 }
@@ -40,7 +40,7 @@ stoi <- read_ods(odf_file,5)
 gen_fabm_code(vars,pars,funs,pros,stoi,"simple_model.f90",diags = TRUE)
 # build GOTM
 build_GOTM(build_dir = "../build",fabm_file = "simple_model.f90",
-           src_dir = "../gotm/extern/fabm/src/models/tuddhyb/rodeo")
+           src_dir = "../gotm")
 }
 
 }

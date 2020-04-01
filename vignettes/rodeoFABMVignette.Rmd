@@ -127,7 +127,7 @@ Now we can build GOTM-FABM with our own model using:
 ```{r  message=FALSE, warning=FALSE, results="hide"}
 # build GOTM
 build_GOTM(build_dir = "build",fabm_file = "simple_model.f90",
-           src_dir = "gotm_src/extern/fabm/src/models/tuddhyb/rodeo")
+           src_dir = "gotm_src")
 ```
 
 After copying the example gotm.yaml (the GOTM controll fille), the exymple hypsograph, and the example forcing data, we finally can run GOTM-FABM with our own small model using:
@@ -313,7 +313,7 @@ After creating the fortran source code, *GOTM-FABM* can be automatically compile
 
 ```{r message=FALSE, warning=FALSE, results="hide"}
 # build GOTM with the model
-build_GOTM(build_dir = "build", src_dir = "gotm_src/extern/fabm/src/models/tuddhyb/rodeo/",
+build_GOTM(build_dir = "build", src_dir = "gotm_src",
            fabm_file = "model_1.f90")
 
 # run the model
@@ -388,7 +388,7 @@ Now we can generate the fortran code, compile *GOTM-FABM*, and run the adapted m
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_2.f90", diags = TRUE)
 
 # build GOTM with the model
-build_GOTM(build_dir = "build", src_dir = "gotm_src/extern/fabm/src/models/tuddhyb/rodeo/",
+build_GOTM(build_dir = "build", src_dir = "gotm_src",
            fabm_file = "model_2.f90")
 
 # run the model
@@ -479,7 +479,7 @@ Now we can create the fortran source file, compile *GOTM-FABM*, run the model an
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_3.f90")
 
 # build GOTM with the model
-build_GOTM(build_dir = "build", src_dir = "gotm_src/extern/fabm/src/models/tuddhyb/rodeo/",
+build_GOTM(build_dir = "build", src_dir = "gotm_src",
            fabm_file = "model_3.f90")
 
 # run the model
@@ -586,7 +586,7 @@ We can generate the source code, compile *GOTM-FABM*, run the model, and plot so
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_4.f90")
 
 # build GOTM with the model
-build_GOTM(build_dir = "build", src_dir = "gotm_src/extern/fabm/src/models/tuddhyb/rodeo/",
+build_GOTM(build_dir = "build", src_dir = "gotm_src",
            fabm_file = "model_4.f90")
 
 # run the model
@@ -679,7 +679,7 @@ Now we can create fortran source code, compile *GOTM-FABM*, run the model, and p
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_5.f90")
 
 # build GOTM with the model
-build_GOTM(build_dir = "build", src_dir = "gotm_src/extern/fabm/src/models/tuddhyb/rodeo/",
+build_GOTM(build_dir = "build", src_dir = "gotm_src",
            fabm_file = "model_5.f90")
 
 # run the model

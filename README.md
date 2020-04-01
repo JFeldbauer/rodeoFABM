@@ -51,7 +51,7 @@ gen_fabm_code(vars, pars, funs, pros, stoi, "simple_model.f90", diags = TRUE)
 
 # build GOTM
 build_GOTM(build_dir = "../build", fabm_file = "simple_model.f90",
-           src_dir = "../gotm/extern/fabm/src/models/tuddhyb/rodeo")
+           src_dir = "../gotm")
 
 ```
 
