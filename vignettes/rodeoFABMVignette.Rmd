@@ -711,6 +711,16 @@ There are a few additional arguments for state variables that can be defined in 
 By default the initial values for the *FABM* sate variables are constant throughout the whole profile. With some tinkering we can profide profiles of initial values.
 Therefore, you need to have (a) text file(s) with (the) profiles that you want to initialise and install the R packages `ncdf4`, `data.table`, `gotmtools` from the AEMON-J github. The approach is to first run GOTM with 0 time steps (stop date = start date). After a run with GOTM, a `restart.nc` file is created, that can be use to restart a simulation with the same settings that ended the previous simulation. By running with 0 time steps, this file contains the "standard" initial values, including the ones in your biogeochemical model. Then the you need to replaces the homogeneous initial profiles by your specified profiles in the `restart.nc` file. Lastly, you need to set the `restart` option to "true". If you run gotm now, it will run with the initial profiles for you biogeochemical model (note that you'll have to rerun this approach every time before you want to run GOTM, because every new GOTM run overwrites the `restart.nc` file). Alternatively you can save the created `restart.nc` file e.g. as `restart_init_profiles.nc` and use this file to override the `restart.nc` before you run GOTM.
 
+### Defining own functions
+
+#### Defining functions in the *funs* data.frame
+
+It is possible to define own functions and call them. If the function is simple i.e. can be calculated in one line of code (e.g. limiting functions for algae growth) it can be defined from the *expressions* column of the *pros* data.frame. In order to define own functions two additional columns are needed in the *funs* data.frame: `expression` and `arguments`. Similar to the *pros* data.frame the `expression` column gives the mathematical expression to calculate. The  `arguments` column gives all input arguments that the functions uses, in the same order they are supplied during function calls (e.g. in the *expression* column of the *pros* data.frame), separated by commas (",").
+
+
+#### Defining functions in external fortran files
+
+More complex functions can be supplied as external fortran code. Two additional columns are needed in the *funs* data.frame: `file` and `module`. They give the name of the source code file and the name of the module, which is then loaded in the main source code. This feature is still very experimental and might lead to errors!
 
 ### Automatic model documentation
 
