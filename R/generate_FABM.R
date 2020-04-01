@@ -35,7 +35,7 @@
 #' gen_fabm_code(vars,pars,funs,pros,stoi,"simple_model.f90",diags = TRUE)
 #' }
 
-gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=TRUE){
+gen_fabm_code <- function(vars, pars, funs, pros, stoi, file_name = "model.f90", diags = TRUE) {
 
   cat("Checking model..\n")
   ## test if the model configuration is ok (at the moment by creating a rodeo object)
@@ -239,7 +239,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     code <- code_add(code,"\n")
   }
   ## declare parameters
-  code <- code_add(code,paste0("\t\treal(rk) :: ",pars$name))
+  code <- code_add(code,paste0("\t\treal(rk) :: ", pars$name))
   code <- code_add(code,"\n")
   ## declare model procedures
   code <- code_add(code,c("\n\tcontains\n","\t\t! Reference model procedures here.",
@@ -647,6 +647,7 @@ add_self <- function(expr,pars){
   expr <- sapply(expr,function(x)gsub("[/]"," / ",x))
   expr <- sapply(expr,function(x)gsub("[(]"," ( ",x))
   expr <- sapply(expr,function(x)gsub("[)]"," ) ",x))
+  expr <- sapply(expr,function(x)gsub("[,]"," , ",x))
   expr <- sapply(expr,function(x)gsub("  "," ",x))
   expr <- sapply(expr,function(x)gsub("  "," ",x))
 
@@ -663,6 +664,7 @@ add_self <- function(expr,pars){
   expr <- sapply(expr,function(x)gsub("[/]"," / ",x))
   expr <- sapply(expr,function(x)gsub("[(]"," ( ",x))
   expr <- sapply(expr,function(x)gsub("[)]"," ) ",x))
+  expr <- sapply(expr,function(x)gsub("[,]"," , ",x))
   expr <- sapply(expr,function(x)gsub("  "," ",x))
   expr <- sapply(expr,function(x)gsub("  "," ",x))
   expr <- sapply(expr,function(x)gsub("[\\^]"," ** ",x))

@@ -159,6 +159,23 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
   fileConn<-file("pros_expr.tex")
   writeLines(pros_eq, fileConn)
   close(fileConn)
+  
+  # table of function expressions
+  if(any(!is.na(funs$expression))) {
+    
+    mn <- ifelse(landscape, 12, 18)
+    p_break <- (1:(nrow(funs[!is.na(funs$expression),]) %/% mn))*mn
+    if(max(p_break == nrow(funs[!is.na(funs$expression),]))) {
+      p_break <- p_break[-length(p_break)]
+    }
+    # table of process rates
+    funs_eq <- equation_maker(vars, pars, funs[!is.na(funs$expression),], funs, landscape = landscape, tex = tex,
+                              split.at = p_break)
+    # write to file
+    fileConn<-file("funs_expr.tex")
+    writeLines(funs_eq, fileConn)
+    close(fileConn)
+  }
 
   # create stoicheometrie tabellen
   stoi_t <- stoi[c("variable", "process", "expression")]
@@ -523,4 +540,4 @@ fraction_maker <- function(text){
 
 math <- function(x) {
   paste0("$", gsub(pattern="*", replacement = "\\cdot ", x = x, fixed = TRUE), "$")
-  }
+}
