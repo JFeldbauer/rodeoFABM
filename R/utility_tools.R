@@ -5,6 +5,8 @@
 #' @param build_dir build directory
 #' @param src_dir GOTM source directory. The directory the GOTM source code was cloned into from github
 #' @param fabm_file forthran source file for FABM created by gen_fabm_code()
+#' @param funs_file Path to additional text files containing functions that should be compiled alon
+#'    with the generateds fortran files
 #' @keywords FABM, GOTM, compile
 #' @author Johannes Feldbauer
 #' @export
@@ -34,13 +36,15 @@
 #'            src_dir = "../gotm")
 #' }
 #'
-build_GOTM <- function(build_dir,src_dir,fabm_file){
+build_GOTM <- function(build_dir,src_dir,fabm_file, funs_file = NULL){
 
   # name of the fortran file within the FABM directory
   src_file = "rodeo.F90"
   
+  
   # add subfolder to source dir
-  src_dir <- file.path(src_dir,"extern","fabm","src","models","tuddhyb","rodeo")
+  src_root <-file.path(src_dir, "extern", "fabm", "src", "models", "tuddhyb")
+  src_dir <- file.path(src_dir, "extern", "fabm", "src", "models", "tuddhyb", "rodeo")
 
   # Set original working directory
   oldwd <- getwd()
@@ -51,9 +55,27 @@ build_GOTM <- function(build_dir,src_dir,fabm_file){
   })
 
   # copy FABM file to source directory
-  cat("copying file ",fabm_file," to ",src_dir,"\n")
-  file.copy(fabm_file,file.path(src_dir,src_file),overwrite = TRUE)
+  cat("copying file ", fabm_file," to ", src_dir, "\n")
+  file.copy(fabm_file, file.path(src_dir, src_file), overwrite = TRUE)
 
+  # if given copy function files to source directory
+  if(length(funs_file) > 0) {
+    cat(paste0("Copying function files to ", src_dir, "\n"))
+    sapply(funs_file, function(f)file.copy(f, file.path(src_dir, f)))
+  
+    # update makefile
+    cmakef <- paste0("add_library(fabm_models_tuddhyb OBJECT\n", "\t\ttuddhyb_model_library.F90\n",
+                     paste0("\t\trodeo/",funs_file,"\n", collapse = ""), "\t\trodeo/rodeo.F90\n",
+                     "\t\t)\n","add_dependencies(fabm_models_tuddhyb fabm_base)")
+  } else {
+    cmakef <- paste0("add_library(fabm_models_tuddhyb OBJECT\n", "\t\ttuddhyb_model_library.F90\n",
+                     "\t\trodeo/rodeo.F90\n", "\t\t)\n",
+                     "add_dependencies(fabm_models_tuddhyb fabm_base)")
+  }
+  # write CMakeFiles.txt
+ cat(cmakef, file = file.path(src_root, "CMakeLists.txt"))
+  
+  
   # complie
   setwd(build_dir)
   cat("compiling \n\n")

@@ -74,6 +74,24 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
     }
   }
 
+  if(any(!is.na(funs$file))) {
+    # check if function files that are provides are available
+    for (f in funs$file[!is.na(funs$file)]) {
+      if(!file.exists(f)) {
+        stop(paste0('File "', f, '" not found\n'))
+      }
+      # check if the module name is available
+      if(is.na(funs[which(funs$file == f), "module"])) {
+        stop(paste0('Argument "module" for function "', funs[which(funs$file == f), "name"],
+                    '" missing \n'))
+      }
+      ext_modules <- paste0("\tuse ", unique(funs$module[!is.na(funs$module)]), "\n")
+    }
+    
+  } else {
+    ext_modules <- NULL
+  }
+  
   cat("Model input OK\n")
 
   ## write switches for sedimentation processes
@@ -173,7 +191,7 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   funs <- data.frame(funs, stringsAsFactors = FALSE)
   ##------------- start code writing -------------------------------------------------
   code <- paste0('#include "fabm_driver.h"\n','module tuddhyb_rodeo\n',
-                 '\tuse fabm_types\n', '\timplicit none\n',  '\tprivate\n',
+                 '\tuse fabm_types\n', ext_modules, '\timplicit none\n',  '\tprivate\n',
                  '\ttype, extends(type_base_model), public :: type_tuddhyb_rodeo\n',
                   collapse = "\n")
   ## declare state variables
