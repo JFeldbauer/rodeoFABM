@@ -57,6 +57,22 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   chk_units(pars,"parameter")
   chk_units(pros,"process")
 
+  # check if defined functions have all arguments in the expression
+  if(any(!is.na(funs$expression))) {
+    for (i in which(!is.na(funs$expression))) {
+      # check if all functions that have an expression also declare arguments for the function
+      if(is.na(funs[i, "arguments"])) {
+        stop(paste0('Function "', funs[i, "name"], '" has no arguments declared!\n'))
+      }
+      args <- unlist(strsplit(x = gsub("[ ]*", "", funs[i, "arguments"]), split = ","))
+      
+      # check if all arguments are used in the function
+      if(any(!sapply(args, function(a) grepl(a, funs[i, "expression"])))) {
+        stop(paste0('Argument "', args[!sapply(args, function(a) grepl(a, funs[i, "expression"]))],
+                    '" not used in function "', funs[i, "name"], '"\n'))
+      }
+    }
+  }
 
   cat("Model input OK\n")
 
@@ -153,7 +169,8 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
 
   ## in order to avoid trouble later: if funs is empty add FALSE to arguments
   funs <- lapply(funs, function(x){if(length(x)==0){x <- FALSE} else {x <- x}})
-
+  ## change funs back to a data.frame
+  funs <- data.frame(funs, stringsAsFactors = FALSE)
   ##------------- start code writing -------------------------------------------------
   code <- paste0('#include "fabm_driver.h"\n','module tuddhyb_rodeo\n',
                  '\tuse fabm_types\n', '\timplicit none\n',  '\tprivate\n',
@@ -291,6 +308,16 @@ gen_fabm_code <- function(vars,pars,funs,pros,stoi,file_name="model.f90",diags=T
   code <- code_add(code,c("\tend subroutine initialize\n\n","\t! Add model subroutines here.\n"))
   code <- code_add(code,"\n")
 
+##----------------------------- functions ---------------------------------------------------------
+  
+  if(any(!is.na(funs$expression))) {
+    
+    for (i in which(!is.na(funs$expression))) {
+      code <- code_add(code, fun_maker(fun = funs[i, ]))
+    }
+    
+  }
+  
 ##---------------------------- subroutine get_vertical_movement -----------------------------------
 
   if(any(pros$sedi)){
@@ -664,3 +691,22 @@ chng_num <- function(code){
 
 }
 
+
+# function to create fortran function
+fun_maker <- function(fun){
+  
+  txt_out <- paste0("\treal(rk) function ", fun$name, "(")
+  # fund function arguments
+  txt_out <- paste0(txt_out, fun$arguments, ")\n")
+  txt_out <- code_add(txt_out, "\n\t\t")
+  
+  # declare function arguments
+  txt_out <- code_add(txt_out, paste0("real(rk), intent(in) :: ", fun$arguments, "\n\n"))
+  # calculation of function output
+  txt_out <- code_add(txt_out, paste0("\t\t", fun$name, " = ", fun$expression, "\n\n"))
+  
+  # end function
+  txt_out <- code_add(txt_out, paste0("\tend function ", fun$name, "\n\n"))
+
+  return(txt_out)
+}
