@@ -61,7 +61,7 @@ build_GOTM <- function(build_dir,src_dir,fabm_file, funs_file = NULL){
   # if given copy function files to source directory
   if(length(funs_file) > 0) {
     cat(paste0("Copying function files to ", src_dir, "\n"))
-    sapply(funs_file, function(f)file.copy(f, file.path(src_dir, f)))
+    sapply(funs_file, function(f)file.copy(f, file.path(src_dir, f), overwrite = TRUE))
   
     # update makefile
     cmakef <- paste0("add_library(fabm_models_tuddhyb OBJECT\n", "\t\ttuddhyb_model_library.F90\n",
