@@ -37,6 +37,8 @@
 
 gen_fabm_code <- function(vars, pars, funs, pros, stoi, file_name = "model.f90", diags = TRUE) {
 
+##----------------- check input --------------------------------------------------------------------
+  
   cat("Checking model..\n")
   ## test if the model configuration is ok (at the moment by creating a rodeo object)
   model <- rodeo::rodeo$new(vars,pars,funs,pros,stoi)
@@ -93,7 +95,9 @@ gen_fabm_code <- function(vars, pars, funs, pros, stoi, file_name = "model.f90",
   }
   
   cat("Model input OK\n")
-
+  
+##--------------- set domain flags -----------------------------------------------------------------
+  
   ## write switches for sedimentation processes
   if(any(!is.na(pros$sedi))){
     pros$sedi[is.na(pros$sedi)] <- FALSE
@@ -189,7 +193,9 @@ gen_fabm_code <- function(vars, pars, funs, pros, stoi, file_name = "model.f90",
   funs <- lapply(funs, function(x){if(length(x)==0){x <- FALSE} else {x <- x}})
   ## change funs back to a data.frame
   funs <- data.frame(funs, stringsAsFactors = FALSE)
-  ##------------- start code writing -------------------------------------------------
+  
+##----------------- start code writing -------------------------------------------------------------
+  
   code <- paste0('#include "fabm_driver.h"\n','module tuddhyb_rodeo\n',
                  '\tuse fabm_types\n', ext_modules, '\timplicit none\n',  '\tprivate\n',
                  '\ttype, extends(type_base_model), public :: type_tuddhyb_rodeo\n',
@@ -216,6 +222,14 @@ gen_fabm_code <- function(vars, pars, funs, pros, stoi, file_name = "model.f90",
       code <- code_add(code,paste0("\t\ttype (type_diagnostic_variable_id) :: id_",
                                  pros$name[pros$pela]))
       code <- code_add(code,"\n")
+    }
+    ## dependencies that are to be saved as diagnostics
+    if(any(!is.na(funs$dependency) & funs$diag)) {
+      funs_diag <- funs[!is.na(funs$dependency) & !is.na(funs$diag) & funs$diag, ]
+      code <- code_add(code,paste0("\t\ttype (type_diagnostic_variable_id) :: id_",
+                                   paste0(funs_diag$name[funs_diag$pela], "_DIAGNOSTIC")))
+      code <- code_add(code,"\n")
+      
     }
     ## if there are surface processes add diagnostics
     if(any(pros$surf)){
@@ -294,6 +308,17 @@ gen_fabm_code <- function(vars, pars, funs, pros, stoi, file_name = "model.f90",
                           pros$name[pros$pela],",'",pros$name[pros$pela],
                           "','", pros$unit[pros$pela],"','",
                           pros$description[pros$pela],"')"))
+    }
+    ## dependencies that are to be saved as diagnostics
+    if(any(!is.na(funs$dependency) & funs$diag)) {
+      code <- code_add(code,"\n")
+      code <- code_add(code,paste0("\t\tcall self%register_diagnostic_variable(self%id_",
+                                   paste0(funs_diag$name[funs_diag$pela], "_DIAGNOSTIC"),
+                                   ",'", paste0(funs_diag$name[funs_diag$pela], "_DIAGNOSTIC"),
+                                   "','", funs_diag$unit[funs_diag$pela],"','",
+                                   paste0(funs_diag$description[funs_diag$pela],
+                                          " diagnostic variable"),"')"))
+      
     }
     ## surface diagnostic variables
     if(any(pros$surf)){
@@ -442,9 +467,15 @@ gen_fabm_code <- function(vars, pars, funs, pros, stoi, file_name = "model.f90",
     code <- code_add(code,"\n")
 
     if(diags){
-      code <- code_add(code,paste0("\t\t\t_SET_DIAGNOSTIC_(self%id_",pros$name[pros$pela],
+      code <- code_add(code, paste0("\t\t\t_SET_DIAGNOSTIC_(self%id_",pros$name[pros$pela],
                                    ", ",pros$name[pros$pela],")"))
       code <- code_add(code,"\n")
+      if(any(!is.na(funs$dependency) & funs$diag)) {
+        code <- code_add(code, paste0("\t\t\t_SET_DIAGNOSTIC_(self%id_",
+                                      paste0(funs_diag$name[funs_diag$pela], "_DIAGNOSTIC"),
+                                      ", ", funs_diag$name[funs_diag$pela], ")"))
+        code <- code_add(code,"\n")
+      }
     }
     code <- code_add(code,"\t\t_LOOP_END_\n\tend subroutine do\n\n")
   }
