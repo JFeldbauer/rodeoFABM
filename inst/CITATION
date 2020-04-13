@@ -1,0 +1,16 @@
+citHeader("If you use rodeoFABM in work that leads to a publication, I would appreciate it if
+you would kindly cite rodeoFABM in your manuscript.")
+
+citEntry(
+  entry    = "misc",
+  title    = "Create FABM code in {R}: Package {rodeoFABM}",
+  author   = personList(as.person("Johannes Feldbauer")),
+  journal  = "GitHub repository",
+  year     = 2020,
+  publisher = "GitHub",
+  url      = "https://github.com/JFeldbauer/rodeoFABM",
+  textVersion = paste("Johannes Feldbauer (2020).",
+                      "Create FABM code in R: Package rodeoFABM",
+                      "GitHub repository, URL ",
+                      "https://github.com/JFeldbauer/rodeoFABM")
+)
