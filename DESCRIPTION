@@ -1,6 +1,6 @@
 Package: rodeoFABM
 Title: Create FABM fortran90 code from data.frames.
-Version: 0.2.0.0
+Version: 0.2.1.0
 Authors@R: 
     person(given = "Johannes",
            family = "Feldbauer",
@@ -10,7 +10,10 @@ Authors@R:
 Description: Create FABM fortran90 code from data.frames.
 License: GPL (>= 2)
 Imports:
-   rodeo
+   rodeo,
+   ncdf4,
+   plot3D,
+   RColorBrewer
 VignetteBuilder: knitr
 Suggests:
     knitr,

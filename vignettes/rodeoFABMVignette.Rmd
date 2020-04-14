@@ -59,7 +59,7 @@ The package `rodeoFABM` is a colletion of small tools to help create water quali
 - Helps users that don't have the technical know how
 - make model adaptation, communikation, and maintenace easy
 
-Therfore the water quality model is written in the standard [Peterson matrix notation](http://en.wikipedia.org/wiki/Petersen_matrix) and stored in text files or spread sheets. The package `rodeoFABM` automatically generates `FABM` specific FORTRAN code from these files and can automatically compile `GOTM` coupled with the newly created model, as well as .yaml control files for the water quality model.
+Therfore the water quality model is written in the standard [Peterson matrix notation](http://en.wikipedia.org/wiki/Petersen_matrix) and stored in text files or spread sheets. The package `rodeoFABM` automatically generates `FABM` specific FORTRAN code from these files and can automatically compile `GOTM` (@burchard_2006) coupled with the newly created model, as well as .yaml control files for the water quality model.
 
 # Installation and requirements
 
@@ -152,12 +152,11 @@ We can plot the results e.g. using the `gotmtools` library, which can be install
 devtools:::install_github("aemon-j/gotmtools")
 ```
 ```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
-library(gotmtools)
 # plot temperature
-plot_vari("output.nc", "temp")
+plot_var("output.nc", "temp")
 
 # plot oxygen
-plot_vari("output.nc", "rodeo_C_O2")
+plot_var("output.nc", "rodeo_C_O2")
 
 ```
 
@@ -324,8 +323,8 @@ We can now plot the model results e.g. using `gotmtools::plot_vari()`.
 
 ```{r fig.height=3, fig.width=6, message=FALSE, warning=FALSE, optipng = '-o7', results="hide"}
 # plot the variables
-plot_vari("output.nc", "rodeo_C")
-plot_vari("output.nc", "rodeo_HPO4")
+plot_var("output.nc", "rodeo_C")
+plot_var("output.nc", "rodeo_HPO4")
 ```
 
 
@@ -399,19 +398,23 @@ And plot some of the simulated state variables:
 
 ```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
 # plot the variables
-plot_vari("output.nc", "rodeo_C")
-plot_vari("output.nc", "rodeo_HPO4")
+plot_var("output.nc", "rodeo_C")
+plot_var("output.nc", "rodeo_HPO4")
 ```
 
 From the saved process rates (the diagnostic variables) we can plot e.g. the net. growth rate. We can acces the values stored in the netcdf file e.g. using the function `gotmtools::get_vari()` and plot them using `gotmtools::long_heatmap()`:
 
 ```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
+library(plot3D)
+
 # also plot net. growth
-growth <- get_vari("output.nc", "rodeo_growth")
-death <- get_vari("output.nc", "rodeo_death")
-net_growth <- cbind(growth$Datetime, growth[, -1] - death[, -1])
-z  <-  get_vari("output.nc", var = "z", incl_time = TRUE)
-long_heatmap(wide2long(net_growth, z))
+growth <- get_var("output.nc", "rodeo_growth")
+death <- get_var("output.nc", "rodeo_death")
+net_growth <- growth$var - death$var
+# nice colors
+mycol <- colorRampPalette(rev(RColorBrewer::brewer.pal(11, 'Spectral')))
+# plot the net. growth
+image2D(net_growth, growth$time, growth$z, main = "net. growth", col = mycol(100))
 ```
 
 
@@ -486,15 +489,15 @@ build_GOTM(build_dir = "build", src_dir = "gotm_src",
 system2("./gotm")
 
 # plot the variables
-plot_vari("output.nc", "rodeo_C")
-plot_vari("output.nc", "rodeo_HPO4")
+plot_var("output.nc", "rodeo_C")
+plot_var("output.nc", "rodeo_HPO4")
 
 # also plot net. growth
-growth <- get_vari("output.nc", "rodeo_growth")
-death <- get_vari("output.nc", "rodeo_death")
-net_growth <- cbind(growth$Datetime, growth[, -1] - death[, -1])
-z  <-  get_vari("output.nc", var = "z", incl_time = TRUE)
-long_heatmap(wide2long(net_growth, z))
+growth <- get_var("output.nc", "rodeo_growth")
+death <- get_var("output.nc", "rodeo_death")
+net_growth <- growth$var - death$var
+
+image2D(net_growth, growth$time, growth$z, main = "net. growth", col = mycol(100))
 ```
 
 
@@ -593,9 +596,9 @@ build_GOTM(build_dir = "build", src_dir = "gotm_src",
 system2("./gotm")
 
 # plot the variables
-plot_vari("output.nc", "rodeo_C")
-plot_vari("output.nc", "rodeo_HPO4")
-plot_vari("output.nc", "rodeo_O2")
+plot_var("output.nc", "rodeo_C")
+plot_var("output.nc", "rodeo_HPO4")
+plot_var("output.nc", "rodeo_O2")
 ```
 
 
@@ -686,11 +689,11 @@ build_GOTM(build_dir = "build", src_dir = "gotm_src",
 system2("./gotm")
 
 # plot the variables
-plot_vari("output.nc", "rodeo_C")
-plot_vari("output.nc", "rodeo_HPO4")
-plot_vari("output.nc", "rodeo_O2")
-plot_vari("output.nc", "rodeo_POM")
-plot_vari("output.nc", "rodeo_SPOM")
+plot_var("output.nc", "rodeo_C")
+plot_var("output.nc", "rodeo_HPO4")
+plot_var("output.nc", "rodeo_O2")
+plot_var("output.nc", "rodeo_POM")
+plot_var("output.nc", "rodeo_SPOM")
 ```
 
 
