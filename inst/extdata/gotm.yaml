@@ -5,7 +5,7 @@ location:
    longitude: 10 # /LER/ longitude [degrees East; min=-360.0; max=360.0; default=0.0]
    depth: 47 # /LER/ water depth [m; min=0.0; default=100.0]
    hypsograph: hypsograph.dat # /LER/ hypsograph [default=]
-water_balance_method: 3 # 0, 'none', 1, 'surface', 2, 'all layers', 3, 'free surface', default = 0
+water_balance_method: 2 # 0, 'none', 1, 'surface', 2, 'all layers', 3, 'free surface', default = 0
 time:
    start: 2010-01-01 00:00:00 # /LER/ start date and time [yyyy-mm-dd HH:MM:SS; default=2017-01-01 00:00:00]
    stop: 2012-12-31 00:00:00 # /LER/ stop date and time [yyyy-mm-dd HH:MM:SS; default=2018-01-01 00:00:00]
@@ -118,6 +118,10 @@ surface:
          scale_factor: 1 # scale factor to be applied to values read from file [default=1.0]
       calc_evaporation: true            # calculate evaporation from meteorological conditions [default=false]
       ssuv_method: 0                    # wind treatment [0=use absolute wind speed, 1=use wind speed relative to current velocity; default=1]
+   longwave_radiation:                      # net longwave radiation
+      method: 1                         # method [0=from file, 1=Clark, 2=Hastenrath, 3=Bignami, 4=Berliand; default=1]
+      file:                             # path to file with time series [default=]
+      column: 1                         # index of column to read from [default=1]
    albedo:
       method: 1                         # method to compute albedo [0=constant, 1=Payne (1972), 2=Cogley (1979); default=1]
       constant_value: 0.0               # constant value to use throughout the simulation [fraction; min=0.0; max=1.0; default=0.0]
@@ -237,7 +241,7 @@ mimic_3d:                               # effects of horizontal gradients
       t_adv: false                      # horizontally advect temperature [default=false]
       s_adv: false                      # horizontally advect salinity [default=false]
    zeta:                                # surface elevation
-      method: 3                         # method [0=constant, 1=from tidal constituents, 2=from file; default=0]
+      method: 0                         # method [0=constant, 1=from tidal constituents, 2=from file; default=0]
       constant_value: 0.0               # value to use throughout the simulation [m; default=0.0]
       file:                             # path to file with time series [default=]
       column: 1                         # index of column to read from [default=1]

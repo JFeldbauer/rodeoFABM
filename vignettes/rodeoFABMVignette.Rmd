@@ -146,12 +146,9 @@ write.table(meteo_file, "meteo_file.dat", sep = "\t", row.names = FALSE,
 system2("./gotm")
 ```
 
-We can plot the results e.g. using the `gotmtools` library, which can be installed from the [AEMON-J github](https://github.com/aemon-j/gotmtools) using:
+We can plot the results e.g. using the `plot_var()` function using:
 
-```{r eval=FALSE}
-devtools:::install_github("aemon-j/gotmtools")
-```
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
+```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3}
 # plot temperature
 plot_var("output.nc", "temp")
 
@@ -321,7 +318,7 @@ system2("./gotm")
 
 We can now plot the model results e.g. using `gotmtools::plot_vari()`.
 
-```{r fig.height=3, fig.width=6, message=FALSE, warning=FALSE, optipng = '-o7', results="hide"}
+```{r fig.height=3, fig.width=6, message=FALSE, warning=FALSE, results="hide"}
 # plot the variables
 plot_var("output.nc", "rodeo_C")
 plot_var("output.nc", "rodeo_HPO4")
@@ -396,7 +393,7 @@ system2("./gotm")
 
 And plot some of the simulated state variables:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
+```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3}
 # plot the variables
 plot_var("output.nc", "rodeo_C")
 plot_var("output.nc", "rodeo_HPO4")
@@ -404,7 +401,7 @@ plot_var("output.nc", "rodeo_HPO4")
 
 From the saved process rates (the diagnostic variables) we can plot e.g. the net. growth rate. We can acces the values stored in the netcdf file e.g. using the function `gotmtools::get_vari()` and plot them using `gotmtools::long_heatmap()`:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
+```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3}
 library(plot3D)
 
 # also plot net. growth
@@ -477,7 +474,7 @@ kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in l
 
 Now we can create the fortran source file, compile *GOTM-FABM*, run the model and plot some of the results:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
+```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3}
 # create the fabm code
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_3.f90")
 
@@ -584,7 +581,7 @@ kable(stoi_t, caption="Data set `stoi`: Declaration of stoichiometry matrix in l
 
 We can generate the source code, compile *GOTM-FABM*, run the model, and plot some of the results:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
+```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3}
 # create the fabm code
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_4.f90")
 
@@ -677,7 +674,7 @@ kable(pars_t, caption="Data set `pars`: Declaration of model parameters.")
 
 Now we can create fortran source code, compile *GOTM-FABM*, run the model, and plot the results:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3, optipng = '-o7'}
+```{r message=FALSE, warning=FALSE, results="hide", fig.width=6, fig.height=3}
 # create the fabm code
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_5.f90")
 

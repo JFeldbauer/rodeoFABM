@@ -138,6 +138,7 @@ mycol <- colorRampPalette(rev(RColorBrewer::brewer.pal(11, 'Spectral')))
 #' @param col If only one depth is selected, color of the line to plot
 #' @param main Title of the plot
 #' @param colp Color palette to use for the 2D image
+#' @param ... additional arguments to pass to image2D or plot (if only one depth is selected)
 #' @keywords FABM, GOTM, get variable
 #' @author Johannes Feldbauer
 #' @import ncdf4
@@ -151,7 +152,7 @@ mycol <- colorRampPalette(rev(RColorBrewer::brewer.pal(11, 'Spectral')))
 
 plot_var <- function(file = "output.nc", var = "temp", reference = "surface", z_out = NULL,
                         t_out = NULL, res = 0.25, add = FALSE, col = 1, main = TRUE,
-                        colp = mycol(100)) {
+                        colp = mycol(100), ...) {
   var <- get_var(file, var, z_out, t_out, res, reference)
   if (length(var$z) > 1) {
     yl <- "Depth below surface (m)"
@@ -159,7 +160,7 @@ plot_var <- function(file = "output.nc", var = "temp", reference = "surface", z_
       yl <- "Height above bottom (m)"
     }
     image2D(var$var, var$time, var$z, main = var$name, clab = var$unit, xlab = "Date",
-            ylab = yl, col = colp)
+            ylab = yl, col = colp, ...)
   } else {
     if (main) {
       ml <- paste0(z_out, " m below surface")
@@ -171,7 +172,7 @@ plot_var <- function(file = "output.nc", var = "temp", reference = "surface", z_
     }
     if(!add) {
       plot(var$time, var$var, "n", xlab = "Date", ylab = paste0(var$name, " (", var$unit, ")"),
-           main = ml)
+           main = ml, ...)
       abline(h = pretty(var$var), col = "grey", lty = 15)
       abline(v = pretty(var$time), col = "grey", lty = 15)
     }

@@ -14,7 +14,8 @@ plot_var(
   add = FALSE,
   col = 1,
   main = TRUE,
-  colp = mycol(100)
+  colp = mycol(100),
+  ...
 )
 }
 \arguments{
@@ -41,6 +42,8 @@ are selected (NULL, the default) all available times from the netcdf file are re
 \item{main}{Title of the plot}
 
 \item{colp}{Color palette to use for the 2D image}
+
+\item{...}{additional arguments to pass to image2D or plot (if only one depth is selected)}
 }
 \description{
 This function plots variables for given depths and times from a netcdf file created
