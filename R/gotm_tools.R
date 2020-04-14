@@ -153,14 +153,32 @@ mycol <- colorRampPalette(rev(RColorBrewer::brewer.pal(11, 'Spectral')))
 plot_var <- function(file = "output.nc", var = "temp", reference = "surface", z_out = NULL,
                         t_out = NULL, res = 0.25, add = FALSE, col = 1, main = TRUE,
                         colp = mycol(100), ...) {
+  # get variable
   var <- get_var(file, var, z_out, t_out, res, reference)
+  
+  # get duation in days
+  dt <- (as.numeric(max(var$time)) - as.numeric(min(var$time)))/86400
+  
+  if (dt > 1500) {
+    frm <- "%Y"
+  } else if (dt <= 1500 & dt >= 200) {
+    frm <- "%Y.%m.%d"
+  } else if (dt < 200 & dt > 2) {
+    frm <- "%m.%d"
+  } else if (dt <= 2) {
+    frm <- "%m.%d %H:00"
+  }
+  
   if (length(var$z) > 1) {
     yl <- "Depth below surface (m)"
     if(reference == "bottom") {
       yl <- "Height above bottom (m)"
     }
     image2D(var$var, var$time, var$z, main = var$name, clab = var$unit, xlab = "Date",
-            ylab = yl, col = colp, ...)
+            ylab = yl, col = colp, xaxt = "n", las = 1, ...)
+    axis(1, at = pretty(var$time), labels = FALSE)
+    text(pretty(var$time), par("usr")[3] - 3, labels = format(pretty(var$time), frm),
+         xpd = NA, srt = 336, adj = 0.0, cex = 0.8)
   } else {
     if (main) {
       ml <- paste0(z_out, " m below surface")
