@@ -5,6 +5,7 @@ date: "`r Sys.Date()`"
 output:
   rmarkdown::pdf_document:
     fig_caption: no
+    dev: png
     includes:
       in_header: preamble-latex.tex
     number_sections: yes
@@ -19,6 +20,7 @@ vignette: >
 <!-- ALTERNATIVE FOR HTML
   rmarkdown::html_document:
     number_sections: yes
+    dev: cairo_pdf
     toc: yes
     toc_depth: 3
     toc_float: true
