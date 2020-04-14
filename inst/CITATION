@@ -1,5 +1,6 @@
 citHeader("If you use rodeoFABM in work that leads to a publication, I would appreciate it if
-you would kindly cite rodeoFABM in your manuscript.")
+you would kindly cite rodeoFABM in your manuscript. Please also cite GOTM and FABM (see 
+https://gotm.net/ and https://github.com/fabm-model/fabm/wiki).")
 
 citEntry(
   entry    = "misc",
