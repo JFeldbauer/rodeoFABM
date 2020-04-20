@@ -735,11 +735,11 @@ aggregate_ad_arg <- function(var_arg_ad){
 
 chng_num <- function(code){
   # make all integers to decimals
-  code <- gsub("(\\s+\\-*\\s*[0-9]+)\\s+","\\1.0 ",code)
+  code <- gsub("(\\s+\\-*\\s*[0-9]+)\\s+", "\\1.0 ",code)
   # add postfix _rk to all decimals
-  code <- gsub("(\\s+\\-*[0-9]+\\.[0-9]+)","\\1_rk",code)
+  code <- gsub("(\\s+\\-*[0-9]+\\.[0-9]+)", "\\1_rk",code)
 
-
+  return(code)
 }
 
 
@@ -753,8 +753,12 @@ fun_maker <- function(fun){
   
   # declare function arguments
   txt_out <- code_add(txt_out, paste0("real(rk), intent(in) :: ", fun$arguments, "\n\n"))
+  expr <- fun$expression
+  expr <- gsub("([\\(\\)\\/\\+\\^\\*\\-])", " \\1 ", expr)
+  expr <- gsub("[ ]+", " ", expr)
+  expr <- gsub("^", "**", expr, fixed = TRUE)
   # calculation of function output
-  txt_out <- code_add(txt_out, paste0("\t\t", fun$name, " = ", fun$expression, "\n\n"))
+  txt_out <- code_add(txt_out, paste0("\t\t", fun$name, " = ", expr, "\n\n"))
   
   # end function
   txt_out <- code_add(txt_out, paste0("\tend function ", fun$name, "\n\n"))
