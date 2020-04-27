@@ -10,7 +10,8 @@ get_var(
   z_out = NULL,
   t_out = NULL,
   res = 0.5,
-  reference = "surface"
+  reference = "surface",
+  long = FALSE
 )
 }
 \arguments{
@@ -29,6 +30,8 @@ are selected (NULL, the default) all available times from the netcdf file are re
 
 \item{reference}{Either "surface" or "bottom". The reference point for the depths sepified in
 'z_out'}
+
+\item{long}{Boolean, output the variable in long format? Defaults to FALSE}
 }
 \description{
 This function fetches variables for given depths from a netcdf file created by running GOTM-FABM

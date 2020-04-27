@@ -12,9 +12,11 @@
 #' @param res Spatial resolution for depths, if no depths are explicitly specified by 'z_out'
 #' @param reference Either "surface" or "bottom". The reference point for the depths sepified in
 #'    'z_out'
+#' @param long Boolean, output the variable in long format? Defaults to FALSE
 #' @keywords FABM, GOTM, get variable
 #' @author Johannes Feldbauer
 #' @import ncdf4
+#' @importFrom reshape2 melt
 #' @export
 #' @examples
 #' \dontrun{
@@ -23,7 +25,7 @@
 #'
 
 get_var <- function(file = "output.nc", var = "temp", z_out = NULL, t_out = NULL, res = 0.5,
-                       reference = "surface") {
+                       reference = "surface", long = FALSE) {
   
   # check if reference is correct
   if(!(reference %in% c("surface", "bottom"))) {
@@ -108,6 +110,16 @@ get_var <- function(file = "output.nc", var = "temp", z_out = NULL, t_out = NULL
   
   colnames(v_out) <- z_out
   rownames(v_out) <- format(t_out, "%Y-%m-%d %H:%M:%S")
+  
+  # if long format wanted as output
+  if(long) {
+    
+    v_out <- melt(data.frame(time = t_out,
+                             v_out), id.vars = "time")
+    colnames(v_out) <- c("time", "z", "C")
+    v_out$z <- as.numeric(gsub("X[\\.]*", "", v_out$z)) * ifelse(reference == "surface", -1, 1)
+    v_out <- v_out[!is.na(v_out$C), ]
+  }
   
   return(list(var = v_out,
               z = z_out,
