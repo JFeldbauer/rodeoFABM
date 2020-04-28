@@ -17,9 +17,11 @@
 #'    and the list elements should give the name of the additional column (col_name), an
 #'    alternative name vor the column in the created table (name_out), and a boolen value if the
 #'    column should be created in math mode (math).
+#' @param name additional string to paste to the created tex files
 #' @keywords FABM, GOTM, document, LaTeX
 #' @author Johannes Feldbauer
 #' @export
+#' @importFrom reshape2 dcast
 #' @examples
 #' \dontrun{
 #' library(readODS)
@@ -53,8 +55,8 @@
 #' }
 #'
 
-document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "tex",
-                           ad_col = list()) {
+document_model <- function(vars, pars, pros, funs, stoi, landscape = TRUE, tex = "tex",
+                           ad_col = list(), name = "") {
 
 
   if(tex %in% colnames(vars)){
@@ -75,7 +77,7 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
                             caption = paste0("Description and units of the considered state ",
                                              "variablesin the model."))
   # write to file
-  fileConn <- file("tab_vars.tex")
+  fileConn <- file(paste0("tab_vars", name, ".tex"))
   writeLines(table_vars, fileConn)
   close(fileConn)
 
@@ -98,7 +100,7 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
                             "parameters in the model."),
                             math.cols = mth)
   # write to file
-  fileConn <- file("tab_pars.tex")
+  fileConn <- file(paste0("tab_pars", name, ".tex"))
   writeLines(table_pars, fileConn)
   close(fileConn)
 
@@ -120,7 +122,7 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
                             caption = paste0("Description, used symbol and units of the ",
                                              "biogeo-chemical process rates in the model."))
   # write to file
-  fileConn <- file("tab_pros.tex")
+  fileConn <- file(paste0("tab_pros", name, ".tex"))
   writeLines(table_pros, fileConn)
   close(fileConn)
 
@@ -142,7 +144,7 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
                             caption = paste0("Description, used symbol and units of functions ",
                                              "used in the model."))
   # write to file
-  fileConn <- file("tab_funs.tex")
+  fileConn <- file(paste0("tab_funs", name, ".tex"))
   writeLines(table_funs, fileConn)
   close(fileConn)
   
@@ -156,7 +158,7 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
   pros_eq <- equation_maker(vars, pars, pros, funs, landscape = landscape, tex = tex,
                             split.at = p_break)
   # write to file
-  fileConn<-file("pros_expr.tex")
+  fileConn<-file(paste0("pros_expr", name, ".tex"))
   writeLines(pros_eq, fileConn)
   close(fileConn)
   
@@ -172,7 +174,7 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
     funs_eq <- equation_maker(vars, pars, funs[!is.na(funs$expression),], funs, landscape = landscape, tex = tex,
                               split.at = p_break)
     # write to file
-    fileConn<-file("funs_expr.tex")
+    fileConn<-file(paste0("funs_expr", name, ".tex"))
     writeLines(funs_eq, fileConn)
     close(fileConn)
   }
@@ -260,10 +262,76 @@ document_model <- function(vars,pars,pros,funs,stoi, landscape = TRUE, tex = "te
                                              "table format."),
                             label = "tab:stoi_tot")
   # write to file
-  fileConn<-file("tab_stoi.tex")
+  fileConn<-file(paste0("tab_stoi", name, ".tex"))
   writeLines(stoi_table, fileConn)
   close(fileConn)
 
+  
+  # create stoichometry as matrix
+  stoi_mat <- dcast( stoi[c("variable", "process", "expression")],
+                     process ~ variable, value.var = "expression")
+  
+ 
+  for(i in 1:length(vars_tex[, tex])) {
+    colnames(stoi_mat)[colnames(stoi_mat) == vars_tex$name[i]] <- vars_tex[i, tex]
+  }
+  for(i in 1:length(pros_tex[, tex])) {
+    stoi_mat$process[stoi_mat$process == pros_tex$name[i]] <- pros_tex[i, tex]
+  }
+  
+  stoi_mat[, -1] <- apply(stoi_mat[, -1], 2, paste0, " ")
+  stoi_mat[, -1] <- apply(stoi_mat[, -1], 2, function(x) gsub("([\\*\\/\\+\\-])", " \\1 ", x))
+  stoi_mat[, -1] <- apply(stoi_mat[, -1], 2, function(x) gsub("left(", "\\text{left}(", x,
+                                                              fixed = TRUE))
+  stoi_mat[, -1] <- apply(stoi_mat[, -1], 2, function(x) gsub("right(", "\\text{right}(", x,
+                                                                                  fixed = TRUE))
+  stoi_mat[, -1] <- apply(stoi_mat[, -1], 2, function(x) gsub("(", " \\left( ", x,
+                                                              fixed = TRUE))
+  stoi_mat[, -1] <- apply(stoi_mat[, -1], 2, function(x) gsub(")", " \\right) ", x,
+                                                              fixed = TRUE))
+  stoi_mat[, -1] <- apply(stoi_mat[, -1], 2, function(x) gsub(",", " , ", x, fixed = TRUE))
+  stoi_mat[, -1] <- apply(stoi_mat[, -1], 2, function(x) gsub("NA", " ", x, fixed = TRUE))
+  stoi_mat[, -1] <- apply(stoi_mat[, -1], 2, function(x) gsub("\\- (\\d)", "\\-\\1", x))
+  stoi_mat[, -1] <- apply(stoi_mat[, -1], 2, function(x) gsub("[ ]+", " ", x))
+  
+  
+  
+  ind <- which(stoi_mat != " ", arr.ind	= TRUE)
+  
+  for(i in 1:nrow(ind)) {
+    
+    splitted <- unlist(strsplit(stoi_mat[ind[i, 1], ind[i, 2]], " "))
+    splitted <- splitted[splitted != ""]
+    
+    for(j in 1:length(pars_tex[, tex])) {
+      
+      splitted[splitted == pars_tex$name[j]] <- pars_tex[j, tex]
+      
+    }
+    
+    for(j in 1: length(forc_tex$name)) {
+      
+      splitted[splitted == forc_tex$name[j]] <- forc_tex[j, tex]
+      
+    }
+    
+    stoi_mat[ind[i, 1], ind[i, 2]] <- paste0(splitted,collapse = " ")
+    
+  }
+  
+  stoi_mat_table <- table_maker(stoi_mat, math.cols = rep(TRUE, ncol(stoi_mat)), col.split = 45,
+                            title = "Stoicheometry matrix",
+                            caption = paste0("Stoicheometry matrix, giving the ",
+                                             "stoicheometry factors for every process onto ",
+                                             "every affected state variable"),
+                            label = "tab:stoi_mat")
+  # write to file
+  fileConn < -file(paste0("mat_stoi", name, ".tex"))
+  writeLines(stoi_mat_table, fileConn)
+  close(fileConn)
+  
+  
+  
   # copy example document file
   file.copy(system.file("extdata/document_model.tex", package = "rodeoFABM"), ".")
   cat("\n finished \n")

@@ -12,7 +12,8 @@ document_model(
   stoi,
   landscape = TRUE,
   tex = "tex",
-  ad_col = list()
+  ad_col = list(),
+  name = ""
 )
 }
 \arguments{
@@ -35,6 +36,8 @@ funs, pros, and stoi. The elements of this list must be the corresponding name (
 and the list elements should give the name of the additional column (col_name), an
 alternative name vor the column in the created table (name_out), and a boolen value if the
 column should be created in math mode (math).}
+
+\item{name}{additional string to paste to the created tex files}
 }
 \description{
 This function creates LaTeX tables from the tables used to generate the FABM source code.
