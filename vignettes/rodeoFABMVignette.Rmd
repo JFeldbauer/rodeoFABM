@@ -35,6 +35,8 @@ options(vignetteDocumentFormat= rmarkdown::all_output_formats("rodeoFABMVignette
 
 ```{r include=FALSE}
 library(knitr)
+library(readODS)
+library(rodeoFABM)
 library(xtable)
 opts_chunk$set(dpi=300)
 options(xtable.caption.placement = 'top',
@@ -88,7 +90,7 @@ install_github("JFeldbauer/rodeoFABM")
 To demonstrate the workflow we will create and compile a simple model. The files used in this example
 are contained in the package and can be copied to the current working directory using:
 
-```{r results="hide", warning=FALSE}
+```{r results="hide", warning=FALSE, eval=FALSE}
 # copy example ods file
 example_model <- system.file("extdata/simple_model.ods", package = "rodeoFABM")
 file.copy(from = example_model, to = ".", recursive = TRUE)
@@ -98,7 +100,7 @@ This will copy the Libre Office spread sheet *simple_model.ods* to your current 
 Now we can read in the tables with the declarations of state variables, model parameters, used
 functions and external dependencies, process rate descriptions, and stoichiometry matrix.
 
-```{r  message=FALSE, warning=FALSE, results="hide"}
+```{r  message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 library(readODS)
 
 # read in example ods file
@@ -114,7 +116,7 @@ stoi <- read_ods(odf_file, sheet = 5)
 We store the declarations in the five data frames *vars*, *pars*, *funs*, *pros*, and *stoi*. Using
 these we can now generate FORTRAN source files using the function `gen_fabm_code()`
 
-```{r}
+```{r eval=FALSE}
 library(rodeoFABM)
 
 # generate fabm code
@@ -131,7 +133,7 @@ Using the source code file *simple_model.f90* we can compile *GOTM-FABM*. Therfo
 clone the lake branche of *GOTM* from github and prepare the build process. This can automatically
 be done using the function `clone_GOTM()`:
 
-```{r  message=FALSE, warning=FALSE, results="hide"}
+```{r  message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 # clone github repo
 clone_GOTM(build_dir = "build", src_dir = "gotm_src")
 ```
@@ -141,7 +143,7 @@ compilation using *CMake*. You can see that there are now two new folders in the
 called *gotm_src* and *build*. Now we can build *GOTM-FABM* with our simple model using the
 *simple_model.f90* file and the `build_gotm()` function:
 
-```{r  message=FALSE, warning=FALSE, results="hide"}
+```{r  message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 # build GOTM
 build_GOTM(build_dir = "build",fabm_file = "simple_model.f90",
            src_dir = "gotm_src")
@@ -154,7 +156,7 @@ executable file in the working directory. In order to run our created model we w
 *gotm.yaml* file (the GOTM controll fille), an hypsograph file, and the meteorological forcing data.
 We will copy the example files provides in this package by using: 
 
-```{r  message=FALSE, warning=FALSE, results="hide"}
+```{r  message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 # copy example gotm.yaml
 yaml <- system.file("extdata/gotm.yaml", package = "rodeoFABM")
 file.copy(from = yaml, to = ".", recursive = TRUE)
@@ -169,7 +171,7 @@ write.table(meteo_file, "meteo_file.dat", sep = "\t", row.names = FALSE,
 Now that we have the files *gotm.yaml*, *hypsograph.dat*, and *meteo_file.dat* in our working
 directory, we can run *GOTM-FABM* using:
 
-```{r  message=FALSE, warning=FALSE, results="hide"}
+```{r  message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 # run gotm
 system2("./gotm")
 ```
@@ -179,7 +181,7 @@ files. *output.nc* is the output of the model run and *restart.nc* is a netcdf f
 to initialize a simulation with states stored from the previous run. We can plot the results e.g. by
 using the `plot_var()` function:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=7, fig.height=4}
+```{r message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 # plot temperature
 plot_var("output.nc", "temp")
 
@@ -188,12 +190,14 @@ plot_var("output.nc", "rodeo_C_O2")
 
 ```
 
-
-```{r message=FALSE, warning=FALSE, include=FALSE}
-file.remove(c("gotm", "simple_model.f90", "simple_model.ods", "output.nc",
-              "restart.nc", "gotm.yaml", "fabm.yaml"))
-
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_1.png")
 ```
+
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_2.png")
+```
+
 
 These are the essential steps used to build and run a *GOTM-FABM* model. In the next section we will
 go a little bit more into the details of building a own model using the `rodeoFABM` package and
@@ -212,7 +216,7 @@ meteorological forcing (*meteo_file.dat*) and hypsographic curve (*hypsograph.da
 (files `inflow_m.dat`, `outflow.dat`, and `inflow_wq_m.dat` containing the nutrient concentrations
 of the inflow)
 
-```{r message=FALSE, warning=FALSE, results="hide"}
+```{r message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 ## copy necessary files
 
 # GOTM controll fille
@@ -378,7 +382,7 @@ also create the *FABM* control file `fabm.yaml` and insert the default values fo
 initial values (if declared). If the argument `diags` is set to TRUE the process rates are stored as
 diagnostic variables in the output netcdf file. 
 
-```{r message=FALSE, warning=FALSE, results="hide"}
+```{r message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 # create the fabm code
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_1.f90", diags = TRUE)
 ```
@@ -388,7 +392,7 @@ function `build_GOTM()` (assuming the source code was allready fetched and prepa
 using `clone_GOTM()`), this will also copy the compiled executable to the current working directory,
 which then can be ran using e.g. `system2("./gotm")`. 
 
-```{r message=FALSE, warning=FALSE, results="hide"}
+```{r message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 # build GOTM with the model
 build_GOTM(build_dir = "build", src_dir = "gotm_src",
            fabm_file = "model_1.f90")
@@ -399,13 +403,19 @@ system2("./gotm")
 
 We can now plot the model results e.g. using the `plot_var()` function:
 
-```{r fig.height=4, fig.width=7, message=FALSE, warning=FALSE, results="hide"}
+```{r  message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 # plot the variables
 plot_var("output.nc", "rodeo_C")
 plot_var("output.nc", "rodeo_HPO4")
 ```
 
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_3.png")
+```
 
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_4.png")
+```
 
 ### Getting dependencies from the host model
 
@@ -473,7 +483,7 @@ kable(pars_t, caption="Data frame `pars`: Declaration of model parameters.")
 
 Now we can generate the fortran code, compile *GOTM-FABM*, and run the adapted model.
 
-```{r message=FALSE, warning=FALSE, results="hide"}
+```{r message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 # create the fabm code
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_2.f90", diags = TRUE)
 
@@ -487,17 +497,25 @@ system2("./gotm")
 
 And plot some of the simulated state variables:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=7, fig.height=4}
+```{r message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 # plot the variables
 plot_var("output.nc", "rodeo_C")
 plot_var("output.nc", "rodeo_HPO4")
+```
+
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_5.png")
+```
+
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_6.png")
 ```
 
 From the saved process rates (the diagnostic variables) we can e.g. plot the net growth rate. We
 can acces the values stored in the netcdf file e.g. by using the function `get_var()` and
 plot them using `plot3D::image2D()`:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=7, fig.height=4}
+```{r message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 library(plot3D)
 
 # also plot net. growth
@@ -514,6 +532,9 @@ text(pretty(growth$time), par("usr")[3] - 3, labels = format(pretty(growth$time)
      xpd = NA, srt = 336, adj = 0.0, cex = 0.8)
 ```
 
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_7.png")
+```
 
 ### Sedimentation
 
@@ -582,7 +603,7 @@ kable(stoi_t, caption="Data frame `stoi`: Declaration of stoichiometry matrix in
 Now we can create the FORTRAN source code file, compile *GOTM-FABM*, run the model, and plot some of the
 results:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=7, fig.height=4}
+```{r message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 # create the fabm code
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_3.f90")
 
@@ -609,6 +630,17 @@ text(pretty(growth$time), par("usr")[3] - 3, labels = format(pretty(growth$time)
      xpd = NA, srt = 336, adj = 0.0, cex = 0.8)
 ```
 
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_8.png")
+```
+
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_9.png")
+```
+
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_10.png")
+```
 
 ### Processes at the surface and sediment
 
@@ -706,7 +738,7 @@ kable(stoi_t, caption="Data frame `stoi`: Declaration of stoichiometry matrix in
 We can generate the source code, compile *GOTM-FABM*, run the model, and plot some of the results
 using:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=7, fig.height=4}
+```{r message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 # create the fabm code
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_4.f90")
 
@@ -723,6 +755,17 @@ plot_var("output.nc", "rodeo_HPO4")
 plot_var("output.nc", "rodeo_O2")
 ```
 
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_11.png")
+```
+
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_12.png")
+```
+
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_13.png")
+```
 
 ### Sediment or surface attached state variables{#final_model}
 
@@ -811,7 +854,7 @@ kable(pars_t, caption="Data frame `pars`: Declaration of model parameters.")
 
 We can create fortran source code, compile *GOTM-FABM*, run the model, and plot the results using:
 
-```{r message=FALSE, warning=FALSE, results="hide", fig.width=7, fig.height=4}
+```{r message=FALSE, warning=FALSE, results="hide", eval=FALSE}
 # create the fabm code
 gen_fabm_code(vars, pars, funs, pros, stoi, "model_5.f90")
 
@@ -830,6 +873,25 @@ plot_var("output.nc", "rodeo_POM")
 plot_var("output.nc", "rodeo_SPOM")
 ```
 
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_14.png")
+```
+
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_15.png")
+```
+
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_16.png")
+```
+
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_17.png")
+```
+
+```{r echo=FALSE, out.width='100%'}
+include_graphics("vignetteData/fig/plot_18.png")
+```
 
 # Additional features
 
@@ -971,14 +1033,10 @@ and compiled they look like this:
 opts_knit$set(root.dir=NULL)
 # delete files
 unlink(c("build","gotm_src"), recursive = TRUE)
-file.remove(c("gotm", "model_1.f90", "model_2.f90", "model_3.f90", "model_4.f90", 
-              "model_5.f90", "simple_alg.ods", "meteo_file.dat", "inflow_m.dat",
-              "outflow.dat", "inflow_wq_m.dat", "simple_alg_O2_POM.ods",
-              "simple_alg_O2.ods", "simple_alg_par.ods", "simple_alg_par_sed.ods",
-              "hypsograph.dat", "output.nc", "restart.nc", "gotm.yaml", "fabm.yaml",
-              "tab_vars.tex", "tab_pars.tex", "tab_funs.tex", "tab_pros.tex",
+file.remove(c("gotm", "simple_alg_O2_POM.ods", "simple_alg_O2.ods", "simple_alg_par.ods",
+              "simple_alg_par_sed.ods", "tab_vars.tex", "tab_pars.tex", "tab_funs.tex", "tab_pros.tex",
               "tab_stoi.tex", "pros_expr.tex", "document_model.tex", "funs_expr.tex",
-              "mat_stoi.tex"))
+              "mat_stoi.tex", "simple_alg.ods"))
 ```
 
 # References
