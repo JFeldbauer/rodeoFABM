@@ -46,38 +46,44 @@ get_var <- function(file = "output.nc", var = "temp", z_out = NULL, t_out = NULL
   # get variable
   v_raw <- ncvar_get(nc_file, var)
   meta_v <- ncatt_get(nc_file, var)
+  # check if variable is 1D or 2D (time or time + depth)
+  var_dim <- ifelse(grepl("z", meta_v$coordinates), "2D", "1D")
   # close the connection to the ncdf file
   nc_close(nc_file)
   
   # convert raw time to POSIX
   t_raw <- as.POSIXct(t_raw, origin = gsub("seconds since ", "", meta_t$units), tz = "UTC")
   
-  # if no output depths are given go from highest to lowest in 'res' steps
-  if(!z_user) {
-    z_out <- seq(round(max(z_raw), 0), round(min(z_raw), 0), by = -res)
-    if(reference == "surface") {
-      z_out <- z_out - max(z_out)
+    if(var_dim == "2D") {
+      # if no output depths are given go from highest to lowest in 'res' steps
+    if(!z_user) {
+      z_out <- seq(round(max(z_raw), 0), round(min(z_raw), 0), by = -res)
+      if(reference == "surface") {
+        z_out <- z_out - max(z_out)
+      } else {
+        z_out <- z_out - min(z_out)
+      }
+    } 
+    
+    # if output depth is given check sign of the depths
+    if(z_user) {
+      # sort user defined output
+      z_out <- z_out[order(z_out)]
+      # for "surface" the signs should be negative
+      if(reference == "surface" & all(z_out >= 0)) {
+        z_out <- -z_out      
+      }
+      # for "bottom" the signs should be positive
+      if(reference == "bottom" & all(z_out <= 0)) {
+        z_out <- -z_out      
+      }
+      # for bottom the values should be decreasing to make the plot nice
+      if(reference == "bottom" & all(diff(z_out) > 0)) {
+        z_out <- rev(z_out)      
+      }
+    }
     } else {
-      z_out <- z_out - min(z_out)
-    }
-  } 
-  
-  # if output depth is given check sign of the depths
-  if(z_user) {
-    # sort user defined output
-    z_out <- z_out[order(z_out)]
-    # for "surface" the signs should be negative
-    if(reference == "surface" & all(z_out >= 0)) {
-      z_out <- -z_out      
-    }
-    # for "bottom" the signs should be positive
-    if(reference == "bottom" & all(z_out <= 0)) {
-      z_out <- -z_out      
-    }
-    # for bottom the values should be decreasing to make the plot nice
-    if(reference == "bottom" & all(diff(z_out) > 0)) {
-      z_out <- rev(z_out)      
-    }
+    z_out <- NA
   }
   
   # if output times are given remove other values
@@ -89,37 +95,47 @@ get_var <- function(file = "output.nc", var = "temp", z_out = NULL, t_out = NULL
     t_out <- t_raw
   }
   
-  # matrix for output data
-  v_out <- matrix(NA,length(t_out),length(z_out))
+  if (var_dim == "2D") {
+      # matrix for output data
+    v_out <- matrix(NA,length(t_out),length(z_out))
+  } else {
+      v_out <- rep(NA, length(t_out))
+  }
   
-  # loop through all time steps
-  for(i in 1:length(t_out)){
-    if(reference == "surface") {
-      z_r <- z_raw[, i] - max(z_raw[, i])
-    } else {
-      z_r <- z_raw[, i] - min(z_raw[, i])
+  if (var_dim == "2D") {
+    # loop through all time steps
+    for(i in 1:length(t_out)){
+      if(reference == "surface") {
+        z_r <- z_raw[, i] - max(z_raw[, i])
+      } else {
+        z_r <- z_raw[, i] - min(z_raw[, i])
+      }
+      v_out[i, ] <- approx(z_r, v_raw[, i], z_out, rule = 1)$y
     }
-    v_out[i, ] <- approx(z_r, v_raw[, i], z_out, rule = 1)$y
-  }
   
-  # switch NAs to start of matrix
-  if(length(z_out) > 1) {
-    v_out <- t(apply(v_out, 1, rev))
-    z_out <- rev(z_out)
-  }
-  
-  colnames(v_out) <- z_out
-  rownames(v_out) <- format(t_out, "%Y-%m-%d %H:%M:%S")
-  
-  # if long format wanted as output
-  if(long) {
+    # switch NAs to start of matrix
+    if(length(z_out) > 1) {
+      v_out <- t(apply(v_out, 1, rev))
+      z_out <- rev(z_out)
+    }
     
-    v_out <- melt(data.frame(time = t_out,
-                             v_out), id.vars = "time")
-    colnames(v_out) <- c("time", "z", "C")
-    v_out$z <- as.numeric(gsub("X[\\.]*", "", v_out$z)) * ifelse(reference == "surface", -1, 1)
-    v_out <- v_out[!is.na(v_out$C), ]
+    colnames(v_out) <- z_out
+    rownames(v_out) <- format(t_out, "%Y-%m-%d %H:%M:%S")
+    
+    # if long format wanted as output
+    if(long) {
+      
+      v_out <- melt(data.frame(time = t_out,
+                               v_out), id.vars = "time")
+      colnames(v_out) <- c("time", "z", "C")
+      v_out$z <- as.numeric(gsub("X[\\.]*", "", v_out$z)) * ifelse(reference == "surface", -1, 1)
+      v_out <- v_out[!is.na(v_out$C), ]
+    }
+  } else {
+    v_out <-  v_raw[t_raw %in% t_out]
+    names(v_out) <- var
   }
+  
   
   return(list(var = v_out,
               z = z_out,
