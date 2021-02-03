@@ -15,7 +15,7 @@
 #' @param ad_col named list of additional columns to add to the tables for vars, pars, 
 #'    funs, pros, and stoi. The elements of this list must be the corresponding name (e.g. vars)
 #'    and the list elements should give the name of the additional column (col_name), an
-#'    alternative name vor the column in the created table (name_out), and a boolen value if the
+#'    alternative name for the column in the created table (name_out), and a logical value if the
 #'    column should be created in math mode (math).
 #' @param name additional string to paste to the created tex files
 #' @keywords FABM, GOTM, document, LaTeX
