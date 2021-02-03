@@ -1,6 +1,6 @@
 Package: rodeoFABM
 Title: Create FABM fortran90 code from data.frames.
-Version: 0.2.1.1
+Version: 0.2.1.2
 Authors@R: 
     person(given = "Johannes",
            family = "Feldbauer",

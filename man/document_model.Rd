@@ -13,7 +13,8 @@ document_model(
   landscape = TRUE,
   tex = "tex",
   ad_col = list(),
-  name = ""
+  name = "",
+  nosplit = FALSE
 )
 }
 \arguments{
@@ -38,6 +39,9 @@ alternative name for the column in the created table (name_out), and a logical v
 column should be created in math mode (math).}
 
 \item{name}{additional string to paste to the created tex files}
+
+\item{nosplit}{do not split equations automatically. Sometimes LaTeX will throw an error due to
+splitting equations over several lines, this option can prevent this.}
 }
 \description{
 This function creates LaTeX tables from the tables used to generate the FABM source code.

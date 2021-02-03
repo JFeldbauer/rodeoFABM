@@ -18,6 +18,8 @@
 #'    alternative name for the column in the created table (name_out), and a logical value if the
 #'    column should be created in math mode (math).
 #' @param name additional string to paste to the created tex files
+#' @param nosplit do not split equations automatically. Sometimes LaTeX will throw an error due to
+#' splitting equations over several lines, this option can prevent this.
 #' @keywords FABM, GOTM, document, LaTeX
 #' @author Johannes Feldbauer
 #' @export
@@ -56,7 +58,7 @@
 #'
 
 document_model <- function(vars, pars, pros, funs, stoi, landscape = TRUE, tex = "tex",
-                           ad_col = list(), name = "") {
+                           ad_col = list(), name = "", nosplit = FALSE) {
 
 
   if(tex %in% colnames(vars)){
@@ -71,6 +73,7 @@ document_model <- function(vars, pars, pros, funs, stoi, landscape = TRUE, tex =
     colnames(vars_t) <- c("name", "unit", "description", ad_col$vars$name_out)
     mth <- c(mth, ad_col$vars$math)
   }
+  ## state variables
   # creat table of state variables
   table_vars <- table_maker(vars_t, title = "Used state variables", label = "tab:vars",
                             math.cols = mth,
@@ -93,6 +96,7 @@ document_model <- function(vars, pars, pros, funs, stoi, landscape = TRUE, tex =
     colnames(pars_t) <- c("name", "unit", "description", ad_col$pars$name_out)
     mth <- c(mth, ad_col$pars$math)
   }
+  ## parameter
   # table of used parameters
   table_pars <- table_maker(pars_t, title="Description of biogeo-chemical parameters",
                             label = "tab:pars",
@@ -116,6 +120,7 @@ document_model <- function(vars, pars, pros, funs, stoi, landscape = TRUE, tex =
     colnames(pros_t) <- c("name", "unit", "description", ad_col$pros$name_out)
     mth <- c(mth, ad_col$pros$math)
   }
+  ## processes
   # table of processes
   table_pros <- table_maker(pros_t,title = "Symbols of biogeo-chemical process rates",
                             label = "tab:pros", math.cols = mth,
@@ -126,6 +131,7 @@ document_model <- function(vars, pars, pros, funs, stoi, landscape = TRUE, tex =
   writeLines(table_pros, fileConn)
   close(fileConn)
 
+  ## functions
   if(tex %in% colnames(funs)){
     funs_t <- funs[, c(tex, "unit", "description")]
     colnames(funs_t) <- c("name", "unit", "description")
@@ -138,7 +144,7 @@ document_model <- function(vars, pars, pros, funs, stoi, landscape = TRUE, tex =
     colnames(funs_t) <- c("name", "unit", "description", ad_col$funs$name_out)
     mth <- c(mth, ad_col$funs$math)
   }
-  # table of processes
+  # table of functions
   table_funs <- table_maker(funs_t,title = "Symbols of declared functions",
                             label = "tab:pros", math.cols = mth,
                             caption = paste0("Description, used symbol and units of functions ",
@@ -156,7 +162,7 @@ document_model <- function(vars, pars, pros, funs, stoi, landscape = TRUE, tex =
   }
   # table of process rates
   pros_eq <- equation_maker(vars, pars, pros, funs, landscape = landscape, tex = tex,
-                            split.at = p_break)
+                            split.at = p_break, nosplit = nosplit)
   # write to file
   fileConn<-file(paste0("pros_expr", name, ".tex"))
   writeLines(pros_eq, fileConn)
@@ -166,20 +172,21 @@ document_model <- function(vars, pars, pros, funs, stoi, landscape = TRUE, tex =
   if(any(!is.na(funs$expression))) {
     
     mn <- ifelse(landscape, 12, 18)
-    p_break <- (1:(nrow(funs[!is.na(funs$expression),]) %/% mn))*mn
+    p_break <- (1:(nrow(funs[!is.na(funs$expression),]) %/% mn))* mn
     if(max(p_break == nrow(funs[!is.na(funs$expression),]))) {
       p_break <- p_break[-length(p_break)]
     }
-    # table of process rates
-    funs_eq <- equation_maker(vars, pars, funs[!is.na(funs$expression),], funs, landscape = landscape, tex = tex,
-                              split.at = p_break)
+    # table of function description
+    funs_eq <- equation_maker(vars, pars, funs[!is.na(funs$expression),], funs,
+                              landscape = landscape, tex = tex, split.at = p_break,
+                              nosplit = nosplit)
     # write to file
     fileConn<-file(paste0("funs_expr", name, ".tex"))
     writeLines(funs_eq, fileConn)
     close(fileConn)
   }
-
-  # create stoicheometrie tabellen
+  ## stoicheometry
+  # create stoicheometry tabellen
   stoi_t <- stoi[c("variable", "process", "expression")]
   colnames(stoi_t) <- c("variable", "process", "stoicheometry factor")
 
@@ -436,7 +443,8 @@ table_maker <- function(data, caption = "", title = "", label = "", style = "l",
 }
 
 
-equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = NULL, tex = "tex") {
+equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = NULL,
+                           tex = "tex", nosplit = nosplit) {
 
   newline <- "\n"
   vars[is.na(vars[, tex]),tex] <- ""
@@ -461,6 +469,7 @@ equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = 
     temp_str <- gsub("([\\*\\+\\/\\,\\-])", " \\1 ", pros$expression[i])
     temp_str <- gsub("(", " \\left( ", temp_str, fixed = TRUE)
     temp_str <- gsub(")", " \\right) ", temp_str, fixed = TRUE)
+    temp_str <- gsub("^", " ^ ", temp_str, fixed = TRUE)
     temp_str <- gsub("\\s+", " ", temp_str, fixed = FALSE)
 
     splitted <- unlist(strsplit(temp_str," "))
@@ -485,14 +494,16 @@ equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = 
     splitted[splitted == "*"] <- "\\cdot"
 
     # create fractions
-    splitted <- fraction_maker(splitted)
+    splitted <- fraction_maker(splitted, fun_exps = funs$tex)
 
+    # set courly brackets around "to the power"
+    splitted <- power_maker(splitted)
 
     # max number of elements per line
     nos <- ifelse(landscape, 28, 19)
     
     # if grater split expression over several lines
-    if(length(splitted) > nos) {
+    if(length(splitted) > nos & !nosplit) {
       split_at <- which(splitted == "\\cdot")
       split_at <- split_at[split_at > nos][1]
       if(!is.na(split_at)){
@@ -541,70 +552,177 @@ equation_maker <- function(vars, pars, pros, funs, landscape = TRUE, split.at = 
   return(text_out)
 }
 
-
-fraction_maker <- function(text){
-  
-  for(j in 1:length(text)) {
+power_maker <- function(text) {
+  pow_id <- which(text == "^")
+  num_pow <- length(pow_id)
+  for(p in seq_len(num_pow)) {
+    if(text[pow_id[p] + 1] %in% c("(", "\\left(", "{\\left(")) {
+      text[pow_id[p] + 1] <- paste0("{", text[pow_id[p] + 1])
     
-    if(text[j]=="/"){
-      frac <- TRUE
-      text[j] <- "}{"
-      
-      #left side
-      closed <- TRUE
-      count <- 0
-      k <- j
-      
-      while(closed){
-        k <- k-1
-        if((text[k] == "\\right)")){
-          if(count<1) {
-            text[k] <- ""
-          }
-          count <- count + 1
+      # find closing bracket
+      br_count <- 0
+      for(b in (pow_id[p] + 1):length(text)) {
+        if(text[b] %in% c(")", "\\right)", "\\right)}")) {
+          br_count <- br_count - 1
         }
-        
-        if(text[k] == "\\left("){
-          if(count == 1) {
-            text[k] <- "\\frac{"
-          }
-          count <- count-1
-          if(count == 0) {
-            closed <- FALSE
-          }
+        if(text[b] %in% c("(", "\\left(", "{\\left(")) {
+          br_count <- br_count + 1
+        }
+        if(br_count == 0) {
+          break
         }
       }
-      
-      #right side
-      closed <- TRUE
-      count <- 0
-      k <- j
-      while(closed) {
-        k <- k + 1
-        if((text[k] == "\\left(")){
-          if(count < 1) {
-            text[k] <- ""
-          }
-          count <- count + 1
+      text[b] <- paste0(text[b], "}")
+    }
+  }
+  return(text)
+}
+
+fraction_maker <- function(text, fun_exps = c("\\log", "\\exp", "\\sin",
+                                              "\\cos", "\\tan", "\\sqrt")){
+ 
+  frac_id <- which(text == "/")
+  num_fracs <- length(frac_id)
+  
+  for (f in seq_len(num_fracs)) {
+    text[frac_id[f]] <- "}{"
+    ## numerator
+    # check if there is a bracket left to the division sign
+    if (text[frac_id[f] - 1] %in% c(")", "\\right)")) {
+      # number of open brackets
+      br_count <- 0
+      # find opening bracket on the left
+      for(b in (frac_id[f] - 1):1) {
+        if(text[b] %in% c(")", "\\right)")) {
+          br_count <- br_count + 1
         }
-        if((text[k] == "/")) {
-          count <- count + 1
+        if(text[b] %in% c("(", "\\left(")) {
+          br_count <- br_count - 1
         }
-        if(text[k] == "\\right)") {
-          if(count == 1 ){
-            text[k] <- "}"
+        if(br_count == 0) {
+          break
+        }
+      }
+      # check if the bracket belongs to a function
+      if(!text[b-1] %in% fun_exps) {
+        # if not remove brackets and add \frac{
+        text[b] <- "\\frac{"
+        text[frac_id[f] - 1] <- ""
+      } else {
+        # if it is a function keep brackets and add \frac{ before the function name
+        text[b - 1] <- paste0("\\frac{", text[b - 1])
+      }
+    # if there is no closing bracket before the division sign
+    } else {
+      text[frac_id[f] - 1] <- paste0("\\frac{", text[frac_id[f] - 1])
+    }
+  ## denominator
+    # check if there is an opening bracket after the division sign
+    if (text[frac_id[f] + 1] %in% c("(", "\\left(")) {
+      # number of opened brackets
+      br_count <- 0
+      # find closing bracket
+      for(b in (frac_id[f] + 1):length(text)) {
+        if(text[b] %in% c(")", "\\right)")) {
+          br_count <- br_count - 1
+        }
+        if(text[b] %in% c("(", "\\left(")) {
+          br_count <- br_count + 1
+        }
+        if(br_count == 0) {
+          break
+        }
+      }
+    text[b] <- "}"
+    text[frac_id[f] + 1] <- ""
+    } else {
+      # if there is no opening bracket after the division sign check if there is a funciton
+      if(text[frac_id[f] + 1] %in% fun_exps) {
+        br_count <- 0
+        # find brackets of function
+        for(b in (frac_id[f] + 2):length(text)) {
+          if(text[b] %in% c(")", "\\right)")) {
+            br_count <- br_count - 1
           }
-          count <- count - 1
-          
-          if(count == 0) {
-            closed <- FALSE
+          if(text[b] %in% c("(", "\\left(")) {
+            br_count <- br_count + 1
+          }
+          if(br_count == 0) {
+            break
           }
         }
+      text[b] <- paste0(text[b], "}")
+      } else {
+        text[frac_id[f] + 1] <- paste0(text[frac_id[f] + 1], "}")
       }
     }
   }
   return(text)
 }
+
+# fraction_maker <- function(text){
+#   
+#   for(j in 1:length(text)) {
+#     
+#     if(text[j]=="/"){
+#       frac <- TRUE
+#       text[j] <- "}{"
+#       
+#       #left side
+#       closed <- TRUE
+#       count <- 0
+#       k <- j
+#       
+#       while(closed){
+#         k <- k-1
+#         if((text[k] == "\\right)")){
+#           if(count<1) {
+#             text[k] <- ""
+#           }
+#           count <- count + 1
+#         }
+#         
+#         if(text[k] == "\\left("){
+#           if(count == 1) {
+#             text[k] <- "\\frac{"
+#           }
+#           count <- count-1
+#           if(count == 0) {
+#             closed <- FALSE
+#           }
+#         }
+#       }
+#       
+#       #right side
+#       closed <- TRUE
+#       count <- 0
+#       k <- j
+#       while(closed) {
+#         k <- k + 1
+#         if((text[k] == "\\left(")){
+#           if(count < 1) {
+#             text[k] <- ""
+#           }
+#           count <- count + 1
+#         }
+#         if((text[k] == "/")) {
+#           count <- count + 1
+#         }
+#         if(text[k] == "\\right)") {
+#           if(count == 1 ){
+#             text[k] <- "}"
+#           }
+#           count <- count - 1
+#           
+#           if(count == 0) {
+#             closed <- FALSE
+#           }
+#         }
+#       }
+#     }
+#   }
+#   return(text)
+# }
 
 math <- function(x) {
   paste0("$", gsub(pattern="*", replacement = "\\cdot ", x = x, fixed = TRUE), "$")
