@@ -91,3 +91,7 @@ image2D(t(apply(as.matrix(growth[ , -1]), 1, rev)) -
         xlab = "Date", ylab = "Depth",
         col = ramp.col(c("red4", "grey", "green4")))
 ```
+### Funding
+Work on this project was funded by the European Social Fund and co-financed by tax funds based on the budget
+approved by the members of the Saxon State Parliament.
+
