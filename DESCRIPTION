@@ -13,7 +13,8 @@ Imports:
    rodeo,
    ncdf4,
    plot3D,
-   RColorBrewer
+   RColorBrewer,
+   reshape2
 VignetteBuilder: knitr
 Suggests:
     knitr,
