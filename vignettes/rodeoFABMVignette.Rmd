@@ -64,7 +64,7 @@ compile the 1D physical lake model `GOTM` (@burchard_2006) coupled with the mode
 
 # Installation and requirements
 
-In order to use `rodeoFABM` and run the examples some software tools are neede:
+So far `rodeoFABM` was only tested with different Linux based operating systems. In order to use `rodeoFABM` and run the examples some software tools are neede:
 
 - The GNU compilers ([gcc.gnu.org]{https://gcc.gnu.org})
 - GNU Make ([gnu.org/software/make/]{https://gnu.org/software/make/})
@@ -72,7 +72,7 @@ In order to use `rodeoFABM` and run the examples some software tools are neede:
 - R and devtools ([R-project.org](https://r-project.org))
 - git ([git-scm.com](https://git-scm.com))
 - the netcdf libraries
-- R packages: `readODs`, `plot3D`, `ncdf4`, and `ColorBrewer`
+- R packages: `readODS`, `plot3D`, `ncdf4`, `reshape2`, and `RColorBrewer`
 
 The package `rodeoFABM` can be installed from github using:
 
