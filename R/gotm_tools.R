@@ -16,7 +16,7 @@
 #' @keywords FABM, GOTM, get variable
 #' @author Johannes Feldbauer
 #' @import ncdf4
-#' @importFrom reshape2 melt
+#' @importFrom tidyr pivot_longer
 #' @export
 #' @examples
 #' \dontrun{
@@ -26,18 +26,18 @@
 
 get_var <- function(file = "output.nc", var = "temp", z_out = NULL, t_out = NULL, res = 0.5,
                        reference = "surface", long = FALSE) {
-  
+
   # check if reference is correct
   if(!(reference %in% c("surface", "bottom"))) {
     stop(paste0('Reference "', reference, '" unknown. Must bei either "surface" or "bottom"'))
   }
-  
+
   # set flag if a output depth is given
   z_user <- length(z_out) > 0
-  
+
   # open connection to ncdf file
   nc_file <- nc_open(file)
-  
+
   # get dimension variables
   z_raw <- ncvar_get(nc_file, "z")
   meta_z <- ncatt_get(nc_file, "z")
@@ -50,10 +50,10 @@ get_var <- function(file = "output.nc", var = "temp", z_out = NULL, t_out = NULL
   var_dim <- ifelse(grepl("z", meta_v$coordinates), "2D", "1D")
   # close the connection to the ncdf file
   nc_close(nc_file)
-  
+
   # convert raw time to POSIX
   t_raw <- as.POSIXct(t_raw, origin = gsub("seconds since ", "", meta_t$units), tz = "UTC")
-  
+
     if(var_dim == "2D") {
       # if no output depths are given go from highest to lowest in 'res' steps
     if(!z_user) {
@@ -63,29 +63,29 @@ get_var <- function(file = "output.nc", var = "temp", z_out = NULL, t_out = NULL
       } else {
         z_out <- z_out - min(z_out)
       }
-    } 
-    
+    }
+
     # if output depth is given check sign of the depths
     if(z_user) {
       # sort user defined output
       z_out <- z_out[order(z_out)]
       # for "surface" the signs should be negative
       if(reference == "surface" & all(z_out >= 0)) {
-        z_out <- -z_out      
+        z_out <- -z_out
       }
       # for "bottom" the signs should be positive
       if(reference == "bottom" & all(z_out <= 0)) {
-        z_out <- -z_out      
+        z_out <- -z_out
       }
       # for bottom the values should be decreasing to make the plot nice
       if(reference == "bottom" & all(diff(z_out) > 0)) {
-        z_out <- rev(z_out)      
+        z_out <- rev(z_out)
       }
     }
     } else {
     z_out <- NA
   }
-  
+
   # if output times are given remove other values
   if(length(t_out) > 0) {
     z_raw <- z_raw[, t_raw %in% t_out]
@@ -94,14 +94,14 @@ get_var <- function(file = "output.nc", var = "temp", z_out = NULL, t_out = NULL
   } else {
     t_out <- t_raw
   }
-  
+
   if (var_dim == "2D") {
       # matrix for output data
     v_out <- matrix(NA,length(t_out),length(z_out))
   } else {
       v_out <- rep(NA, length(t_out))
   }
-  
+
   if (var_dim == "2D") {
     # loop through all time steps
     for(i in 1:length(t_out)){
@@ -112,31 +112,31 @@ get_var <- function(file = "output.nc", var = "temp", z_out = NULL, t_out = NULL
       }
       v_out[i, ] <- approx(z_r, v_raw[, i], z_out, rule = 1)$y
     }
-  
+
     # switch NAs to start of matrix
     if(length(z_out) > 1) {
       v_out <- t(apply(v_out, 1, rev))
       z_out <- rev(z_out)
     }
-    
+
     colnames(v_out) <- z_out
     rownames(v_out) <- format(t_out, "%Y-%m-%d %H:%M:%S")
-    
+
     # if long format wanted as output
     if(long) {
-      
-      v_out <- melt(data.frame(time = t_out,
-                               v_out), id.vars = "time")
+
+      v_out <- pivot_longer(setNames(data.frame(time = t_out,
+                               v_out), c("time", z_out)), cols = 2:(ncol(v_out)+1),
+                            names_transform = list(name = as.numeric),
+                            values_drop_na = TRUE)
       colnames(v_out) <- c("time", "z", "C")
-      v_out$z <- as.numeric(gsub("X[\\.]*", "", v_out$z)) * ifelse(reference == "surface", -1, 1)
-      v_out <- v_out[!is.na(v_out$C), ]
     }
   } else {
     v_out <-  v_raw[t_raw %in% t_out]
     names(v_out) <- var
   }
-  
-  
+
+
   return(list(var = v_out,
               z = z_out,
               time = t_out,
@@ -183,10 +183,10 @@ plot_var <- function(file = "output.nc", var = "temp", reference = "surface", z_
                         colp = mycol(100), ...) {
   # get variable
   var <- get_var(file, var, z_out, t_out, res, reference)
-  
+
   # get duation in days
   dt <- (as.numeric(max(var$time)) - as.numeric(min(var$time)))/86400
-  
+
   if (dt > 1500) {
     frm <- "%Y"
   } else if (dt <= 1500 & dt >= 200) {
@@ -196,7 +196,7 @@ plot_var <- function(file = "output.nc", var = "temp", reference = "surface", z_
   } else if (dt <= 2) {
     frm <- "%m.%d %H:00"
   }
-  
+
   if (length(var$z) > 1) {
     yl <- "Depth below surface (m)"
     if(reference == "bottom") {
