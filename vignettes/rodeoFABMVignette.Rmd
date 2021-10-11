@@ -90,7 +90,7 @@ install_github("JFeldbauer/rodeoFABM")
 
 ## First example {#first_exmpl}
 
-To demonstrate the workflow we will create and compile a simple model. The files used in this example
+To demonstrate the work flow we will create and compile a simple model. The files used in this example
 are contained in the package and can be copied to the current working directory using:
 
 ```{r results="hide", warning=FALSE, eval=FALSE}
@@ -206,12 +206,16 @@ These are the essential steps used to build and run a *GOTM-FABM* model. In the 
 go a little bit more into the details of building a own model using the `rodeoFABM` package and
 explain them step by step.
 
+## Manually compiling `GOTM-FABM`
+
+If the provided compilation functions do not work on your operating system instructions on how to include your newly created `FABM` model can be found in the `FABM` wiki: [github.com/fabm-model/fabm/wiki/Developing-a-new-biogeochemical-model](https://github.com/fabm-model/fabm/wiki/Developing-a-new-biogeochemical-model). Instructions on how to compile `GOTM-FABM` can be obtained from the `GOTM` homepage: [gotm.net/portfolio/software/](https://gotm.net/portfolio/software/).
+
 ## Create a model step by step
 
 In order to demonstrate the necessary steps and functionalities we will create a simple
 phytoplankton-nutrients model and progressively add more processes and state variables.
 
-All used Libre Office spread sheets containing the model information, the GOTM controll file, and
+All used Libre Office spread sheets containing the model information, the GOTM control file, and
 the forcing data are contained in the `rodeoFABM` package. You can copy all necessary files to run
 GOTM using the same method as described [in the first example](#first_exmpl). We will use the same
 meteorological forcing (*meteo_file.dat*) and hypsographic curve (*hypsograph.dat*) as in the
