@@ -50,29 +50,32 @@ options(xtable.caption.placement = 'top',
 
 The `R` package `rodeoFABM` is a colletion of functions to help create water quality models that can
 be coupled to physical host models using the `FABM` interface (@bruggeman_general_2014). As the
-name suggests it is heaviely influenced by the `R` package [`rodeo`](https://github.com/dkneis/rodeo)
-(@kneis_r_package_2017). The principle idea is to creat tools that:
+name suggests it is heavily influenced by the `R` package [`rodeo`](https://github.com/dkneis/rodeo)
+(@kneis_r_package_2017). The principle idea is to provide functions that:
 
-- Decouple the "code writing" from the "model developement" part of creating a model
-- Make model adaptation, communikation, and maintenace easier
+- Decouple the "code writing" from the "model development" part of creating a model
+- Make model adaptation, communication, and maintenance easier
 
-The main concept is writing the model equations in the standard
-[Peterson matrix notation](http://en.wikipedia.org/wiki/Petersen_matrix) and storing them in text files or
-spread sheets. The package `rodeoFABM` then can be used to automatically generate `FABM` specific FORTRAN code
-from these files, create `.yaml` control files for the water quality model, automatically
-compile the 1D physical lake model `GOTM` (@burchard_2006) coupled with the model, and generate \LaTeX{} documentation of the model.
+The main concept is to write down the model equations in the standard
+[Peterson matrix notation](http://en.wikipedia.org/wiki/Petersen_matrix) and store them in text files or spread sheets. The package `rodeoFABM` then can be used to automatically generate `FABM` specific FORTRAN code from these files, create `.yaml` control files for the water quality model and generate \LaTeX{} documentation of the model. For some operating systems there are also functions to automatically compile the 1D physical lake model `GOTM` (@burchard_2006) coupled with the model. The package also containse some functions to read into R and plot the outcome of a coupled `GOTM-FBAM` model run.
 
 # Installation and requirements
 
-So far `rodeoFABM` was only tested with different Linux based operating systems. In order to use `rodeoFABM` and run the examples some software tools are neede:
+So far `rodeoFABM` was only tested with different Linux based operating systems, but besides compiling `GOTM-FABM` the contained funcitons should run on all operating systems. To create the `FABM` specific source code only some other R packages are required:
 
-- The GNU compilers ([gcc.gnu.org]{https://gcc.gnu.org})
-- GNU Make ([gnu.org/software/make/]{https://gnu.org/software/make/})
-- GNU CMake ([cmake.org]{https://cmake.org})
-- R and devtools ([R-project.org](https://r-project.org))
+- `readODS`
+- `plot3D`
+- `ncdf4`
+- `reshape2`
+- `RColorBrewer`
+
+In order to automatically compile `GOTM-FABM` and run the examples in this vignette some additional software tools are needed:
+
+- The GNU compilers ([gcc.gnu.org](https://gcc.gnu.org))
+- GNU Make ([gnu.org/software/make/](https://gnu.org/software/make/))
+- GNU CMake ([cmake.org](https://cmake.org))
 - git ([git-scm.com](https://git-scm.com))
 - the netcdf libraries
-- R packages: `readODS`, `plot3D`, `ncdf4`, `reshape2`, and `RColorBrewer`
 
 The package `rodeoFABM` can be installed from github using:
 
@@ -87,7 +90,7 @@ install_github("JFeldbauer/rodeoFABM")
 
 ## First example {#first_exmpl}
 
-To demonstrate the workflow we will create and compile a simple model. The files used in this example
+To demonstrate the work flow we will create and compile a simple model. The files used in this example
 are contained in the package and can be copied to the current working directory using:
 
 ```{r results="hide", warning=FALSE, eval=FALSE}
@@ -203,12 +206,16 @@ These are the essential steps used to build and run a *GOTM-FABM* model. In the 
 go a little bit more into the details of building a own model using the `rodeoFABM` package and
 explain them step by step.
 
+## Manually compiling `GOTM-FABM`
+
+If the provided compilation functions do not work on your operating system instructions on how to include your newly created `FABM` model can be found in the `FABM` wiki: [github.com/fabm-model/fabm/wiki/Developing-a-new-biogeochemical-model](https://github.com/fabm-model/fabm/wiki/Developing-a-new-biogeochemical-model). Instructions on how to compile `GOTM-FABM` can be obtained from the `GOTM` homepage: [gotm.net/portfolio/software/](https://gotm.net/portfolio/software/).
+
 ## Create a model step by step
 
 In order to demonstrate the necessary steps and functionalities we will create a simple
 phytoplankton-nutrients model and progressively add more processes and state variables.
 
-All used Libre Office spread sheets containing the model information, the GOTM controll file, and
+All used Libre Office spread sheets containing the model information, the GOTM control file, and
 the forcing data are contained in the `rodeoFABM` package. You can copy all necessary files to run
 GOTM using the same method as described [in the first example](#first_exmpl). We will use the same
 meteorological forcing (*meteo_file.dat*) and hypsographic curve (*hypsograph.dat*) as in the
