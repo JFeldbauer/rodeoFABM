@@ -241,7 +241,7 @@ mimic_3d:                               # effects of horizontal gradients
       t_adv: false                      # horizontally advect temperature [default=false]
       s_adv: false                      # horizontally advect salinity [default=false]
    zeta:                                # surface elevation
-      method: 0                         # method [0=constant, 1=from tidal constituents, 2=from file; default=0]
+      method: 0                         # method [0=constant, 1=from tidal constituents, 2=from file; 3 flexible; default=0]
       constant_value: 0.0               # value to use throughout the simulation [m; default=0.0]
       file:                             # path to file with time series [default=]
       column: 1                         # index of column to read from [default=1]
@@ -281,7 +281,7 @@ o2:                                     # oxygen
    offset: 0.0                          # offset to be added to values read from file [default=0.0]
 streams:
    inflow:                                    # stream configuration
-      method: 4                                 # inflow method [default=1]
+      method: 4                                 # inflow method [1=surface, 2=bottom, 3=depth range from zu to zl, 4=depth with matching density default=1]
       zu: 0.0                                   # upper limit [m; default=0.0]
       zl: 0.0                                   # lower limit [m; default=0.0]
       flow:                                     # water flow
@@ -303,7 +303,7 @@ streams:
          method: 0
          constant_value: 7.5
    outflow:
-      method: 1
+      method: 1                                 # outflow method: same as inflow. Outflows are just inflows with negative flow values
       zu: 0.0
       zl: 0.0
       flow:
