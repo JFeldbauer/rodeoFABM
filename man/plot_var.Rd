@@ -15,6 +15,7 @@ plot_var(
   col = 1,
   main = TRUE,
   colp = mycol(100),
+  auto.xaxt = TRUE,
   ...
 )
 }
@@ -42,6 +43,9 @@ are selected (NULL, the default) all available times from the netcdf file are re
 \item{main}{Title of the plot}
 
 \item{colp}{Color palette to use for the 2D image}
+
+\item{auto.xaxt}{Automatically create x axis labels. If set to FALSE no x axis labels are
+plotted.}
 
 \item{...}{additional arguments to pass to image2D or plot (if only one depth is selected)}
 }

@@ -166,6 +166,8 @@ mycol <- colorRampPalette(rev(RColorBrewer::brewer.pal(11, 'Spectral')))
 #' @param col If only one depth is selected, color of the line to plot
 #' @param main Title of the plot
 #' @param colp Color palette to use for the 2D image
+#' @param auto.xaxt Automatically create x axis labels. If set to FALSE no x axis labels are
+#'    plotted.
 #' @param ... additional arguments to pass to image2D or plot (if only one depth is selected)
 #' @keywords FABM, GOTM, get variable
 #' @author Johannes Feldbauer
@@ -180,7 +182,7 @@ mycol <- colorRampPalette(rev(RColorBrewer::brewer.pal(11, 'Spectral')))
 
 plot_var <- function(file = "output.nc", var = "temp", reference = "surface", z_out = NULL,
                         t_out = NULL, res = 0.25, add = FALSE, col = 1, main = TRUE,
-                        colp = mycol(100), ...) {
+                        colp = mycol(100), auto.xaxt = TRUE, ...) {
   # get variable
   var <- get_var(file, var, z_out, t_out, res, reference)
 
@@ -189,9 +191,9 @@ plot_var <- function(file = "output.nc", var = "temp", reference = "surface", z_
 
   if (dt > 1500) {
     frm <- "%Y"
-  } else if (dt <= 1500 & dt >= 200) {
+  } else if (dt <= 1500 & dt >= 367) {
     frm <- "%Y.%m.%d"
-  } else if (dt < 200 & dt > 2) {
+  } else if (dt < 367 & dt > 2) {
     frm <- "%m.%d"
   } else if (dt <= 2) {
     frm <- "%m.%d %H:00"
@@ -205,8 +207,10 @@ plot_var <- function(file = "output.nc", var = "temp", reference = "surface", z_
     image2D(var$var, var$time, var$z, main = var$name, clab = var$unit, xlab = "Date",
             ylab = yl, col = colp, xaxt = "n", las = 1, ...)
     axis(1, at = pretty(var$time), labels = FALSE)
-    text(pretty(var$time), par("usr")[3] - 3, labels = format(pretty(var$time), frm),
-         xpd = NA, srt = 336, adj = 0.0, cex = 0.8)
+    if(auto.xaxt) {
+      text(pretty(var$time), par("usr")[3] - 3, labels = format(pretty(var$time), frm),
+           xpd = NA, srt = 336, adj = 0.0, cex = 0.8)
+    }
   } else {
     if (main) {
       ml <- paste0(z_out, " m below surface")
@@ -218,7 +222,7 @@ plot_var <- function(file = "output.nc", var = "temp", reference = "surface", z_
     }
     if(!add) {
       plot(var$time, var$var, "n", xlab = "Date", ylab = paste0(var$name, " (", var$unit, ")"),
-           main = ml, ...)
+           main = ml, xaxt = ifelse(auto.xaxt, "t", "n"), ...)
       abline(h = pretty(var$var), col = "grey", lty = 15)
       abline(v = pretty(var$time), col = "grey", lty = 15)
     }
