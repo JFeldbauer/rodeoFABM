@@ -206,8 +206,8 @@ plot_var <- function(file = "output.nc", var = "temp", reference = "surface", z_
     }
     image2D(var$var, var$time, var$z, main = var$name, clab = var$unit, xlab = "Date",
             ylab = yl, col = colp, xaxt = "n", las = 1, ...)
-    axis(1, at = pretty(var$time), labels = FALSE)
     if(auto.xaxt) {
+      axis(1, at = pretty(var$time), labels = FALSE)
       text(pretty(var$time), par("usr")[3] - 3, labels = format(pretty(var$time), frm),
            xpd = NA, srt = 336, adj = 0.0, cex = 0.8)
     }
