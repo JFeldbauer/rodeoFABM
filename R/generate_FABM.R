@@ -43,7 +43,7 @@ gen_fabm_code <- function(vars, pars, funs, pros, stoi, file_name = "model.f90",
   ## test if the model configuration is ok (at the moment by creating a rodeo object)
   model <- rodeo::rodeo$new(vars,pars,funs,pros,stoi)
 
-  ## test if the dependency refere to standard names as definded by FABM
+  ## test if the dependency refer to standard names as defined by FABM
 
   if(any(!is.na(funs$dependency))){
     if(any(!(funs$dependency[!is.na(funs$dependency)] %in% std_names_FABM$Variable))){
@@ -55,6 +55,14 @@ gen_fabm_code <- function(vars, pars, funs, pros, stoi, file_name = "model.f90",
     funs$dependency <- NA
     }
 
+  # check if column for diagnostics (diag) is there for functions
+  # if not set it to false for all
+  if("diag" %in% colnames(funs)) {
+    funs$diag[is.na(funs$diag)] <- FALSE
+  } else {
+    funs$diag <- FALSE
+  }
+  
   ## check if units are in per second
   chk_units(pars,"parameter")
   chk_units(pros,"process")
